@@ -158,8 +158,9 @@
                 </Border>
                 <Border Style="{StaticResource GroupBorder}">
                     <StackPanel Orientation="Vertical">
-                        <TextBlock Style="{StaticResource GroupTitle}">Flyleaf</TextBlock>
+                        <TextBlock Style="{StaticResource GroupTitle}">Options</TextBlock>
                         <CheckBox IsChecked="{Binding AddFlyleaf, Mode=TwoWay}">Add Flyleaf</CheckBox>
+                        <CheckBox IsChecked="{Binding OutputTestOverlay, Mode=TwoWay}">Output Test Overlay</CheckBox>
                     </StackPanel>
                 </Border>
             </StackPanel>

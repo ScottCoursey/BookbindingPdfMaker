@@ -53,14 +53,15 @@ namespace BookbindingPdfMaker.Services
 
                         for (var signaturePageNumber = 0; signaturePageNumber < (currentSignatureSize * 2); signaturePageNumber++)
                         {
-                            var highPageNum = (signaturePageStart + (currentSignatureSize * 4)) - signaturePageNumber - 1;
-                            var lowPageNum = signaturePageStart + signaturePageNumber;
-
                             var outputPage = AddPage();
 
                             PageDirection direction = PageDirection.TopToRight;
                             var highLocation = OutputLocation.Top;
                             var lowLocation = OutputLocation.Bottom;
+
+                            var highPageNum = (signaturePageStart + (currentSignatureSize * 4)) - signaturePageNumber - 1;
+                            var lowPageNum = signaturePageStart + signaturePageNumber;
+
                             if (lowPageNum % 2 == 0)
                             {
                                 if (_mwvm.AlternatePageRotation)
@@ -112,8 +113,8 @@ namespace BookbindingPdfMaker.Services
                     break;
 
                 case BookSize.FullPaperSize:
-                    _outputBookWidth = XUnit.FromInch(_mwvm.SelectedPaperSize.Width).Point;
-                    _outputBookHeight = XUnit.FromInch(_mwvm.SelectedPaperSize.Height).Point;
+                    _outputBookWidth = XUnit.FromInch(_mwvm.SelectedPaperSize.Height / 2).Point;
+                    _outputBookHeight = XUnit.FromInch(_mwvm.SelectedPaperSize.Width).Point;
                     break;
 
                 default:
@@ -143,13 +144,16 @@ namespace BookbindingPdfMaker.Services
 
         private List<int> GetSignatureSizeList()
         {
-            var numberOfFullSignatures = _pdfInputForm!.PageCount / (_defaultSignatureSize * 4);
-            var pagesInPartialSignature = _pdfInputForm!.PageCount % _defaultSignatureSize;
+            var pageCount = _pdfInputForm!.PageCount + (_mwvm.AddFlyleaf ? 4 : 0);
+
+            var numberOfFullSignatures =  pageCount / (_defaultSignatureSize * 4);
+            var pagesInPartialSignature = pageCount % (_defaultSignatureSize * 4);
 
             List<int> signatureSizeList = Enumerable.Repeat(_defaultSignatureSize, numberOfFullSignatures).ToList();
             if (pagesInPartialSignature > 0)
             {
-                signatureSizeList.Add(pagesInPartialSignature);
+                var fullPageCount = pagesInPartialSignature / 4 + (pagesInPartialSignature % 4 > 0 ? 1 : 0);
+                signatureSizeList.Add(fullPageCount);
             }
 
             var lastUpdated = -1;
@@ -182,11 +186,42 @@ namespace BookbindingPdfMaker.Services
             return newPage;
         }
 
+        private void ApplyBlankPage(PdfPage outputPage)
+        {
+            var paperWidth = outputPage.Width;
+            var paperHeight = outputPage.Height;
+
+            using (var gfx = XGraphics.FromPdfPage(outputPage))
+            {
+                if (_mwvm.OutputTestOverlay)
+                {
+                    gfx.DrawLines(XPens.LightPink, new[]
+                    {
+                        new XPoint(0, paperHeight / 2),
+                        new XPoint(paperWidth, paperHeight / 2)
+                    });
+                }
+            }
+        }
+
         private void ApplyPage(PdfPage outputPage, int inputPageNum, OutputLocation outputLocation, PageDirection pageDirection)
         {
             if (inputPageNum > _pdfInputForm!.PageCount)
             {
                 return;
+            }
+
+            var outputPageImage = true;
+            if (_mwvm.AddFlyleaf)
+            {
+                if (inputPageNum < 3)
+                {
+                    outputPageImage = false;
+                }
+                else
+                {
+                    inputPageNum -= 2;
+                }
             }
 
             using (var gfx = XGraphics.FromPdfPage(outputPage))
@@ -199,37 +234,52 @@ namespace BookbindingPdfMaker.Services
 
                 XRect box;
 
+                if (_mwvm.OutputTestOverlay)
+                {
+                    gfx.DrawLines(XPens.LightPink, new[]
+                    {
+                        new XPoint(0, paperHeight / 2),
+                        new XPoint(paperWidth, paperHeight / 2)
+                    });
+                }
+
                 if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToRight)
                 {
                     gfx.RotateAtTransform(90, new XPoint(0, 0));
-                    box = new XRect(0, -(paperWidth / 2) - (height / 2), width, height);
+                    box = new XRect((paperHeight / 4) - (width / 2), -(paperWidth / 2) - (height / 2), width, height);
                 }
                 else if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToLeft)
                 {
                     gfx.RotateAtTransform(-90, new XPoint(0, 0));
-                    box = new XRect(-paperHeight / 2, (paperWidth / 2) - (height / 2), width, height);
+                    box = new XRect(-(paperHeight / 4) - (width / 2), (paperWidth / 2) - (height / 2), width, height);
                 }
                 else if (outputLocation == OutputLocation.Bottom && pageDirection == PageDirection.TopToRight)
                 {
                     gfx.RotateAtTransform(90, new XPoint(0, 0));
-                    box = new XRect(paperHeight / 2, -(paperWidth / 2) - (height / 2), width, height);
+                    box = new XRect((paperHeight * 3 / 4) - (width / 2), -(paperWidth / 2) - (height / 2), width, height);
                 }
                 else
                 {
                     gfx.RotateAtTransform(-90, new XPoint(0, 0));
-                    box = new XRect(-paperHeight, (paperWidth / 2) - (height / 2), width, height);
+                    box = new XRect(-(paperHeight * 3 / 4) - (width / 2), (paperWidth / 2) - (height / 2), width, height);
                 }
 
-                gfx.DrawImage(_pdfInputForm, box);
-                gfx.DrawEllipse(XBrushes.Red, new XRect(box.Left - 2.5, box.Top - 2.5, 5, 5));
-                gfx.DrawLines(XPens.LightBlue, new[]
+                if (outputPageImage)
                 {
-                    new XPoint(box.Left, box.Top),
-                    new XPoint(box.Left, box.Bottom),
-                    new XPoint(box.Right, box.Bottom),
-                    new XPoint(box.Right, box.Top),
-                    new XPoint(box.Left, box.Top)
-                });
+                    gfx.DrawImage(_pdfInputForm, box);
+                }
+
+                if (_mwvm.OutputTestOverlay)
+                {
+                    gfx.DrawLines(XPens.LightBlue, new[]
+                    {
+                        new XPoint(box.Left, box.Top),
+                        new XPoint(box.Left, box.Bottom),
+                        new XPoint(box.Right, box.Bottom),
+                        new XPoint(box.Right, box.Top),
+                        new XPoint(box.Left, box.Top)
+                    });
+                }
             }
         }
     }

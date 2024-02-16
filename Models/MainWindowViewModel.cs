@@ -195,6 +195,26 @@ namespace BookbindingPdfMaker.Models
             }
         }
 
+        private bool _outputTestOverlay = false;
+        public bool OutputTestOverlay
+        {
+            get
+            {
+                return _outputTestOverlay;
+            }
+
+            set
+            {
+                if (value == _outputTestOverlay)
+                {
+                    return;
+                }
+
+                _outputTestOverlay = value;
+                OnPropertyChanged();
+            }
+        }
+
         private bool _alternatePageRotation = true;
         public bool AlternatePageRotation
         {
