@@ -53,14 +53,32 @@ namespace BookbindingPdfMaker.Services
 
                         for (var signaturePageNumber = 0; signaturePageNumber < (currentSignatureSize * 2); signaturePageNumber++)
                         {
-                            var topPageNum = (signaturePageStart + (currentSignatureSize * 4)) - signaturePageNumber - 1;
-                            var bottomPageNum = signaturePageStart + signaturePageNumber;
-
-                            PageDirection direction = bottomPageNum % 2 == 1 ? PageDirection.TopToRight : PageDirection.TopToLeft;
+                            var highPageNum = (signaturePageStart + (currentSignatureSize * 4)) - signaturePageNumber - 1;
+                            var lowPageNum = signaturePageStart + signaturePageNumber;
 
                             var outputPage = AddPage();
-                            ApplyPage(outputPage, topPageNum, OutputLocation.Top, direction);
-                            ApplyPage(outputPage, bottomPageNum, OutputLocation.Bottom, direction);
+
+                            PageDirection direction = PageDirection.TopToRight;
+                            var highLocation = OutputLocation.Top;
+                            var lowLocation = OutputLocation.Bottom;
+                            if (lowPageNum % 2 == 0)
+                            {
+                                if (_mwvm.AlternatePageRotation)
+                                {
+                                    direction = PageDirection.TopToLeft;
+                                }
+                            }
+                            else
+                            {
+                                if (!_mwvm.AlternatePageRotation)
+                                {
+                                    highLocation = OutputLocation.Bottom;
+                                    lowLocation = OutputLocation.Top;
+                                }
+                            }
+
+                            ApplyPage(outputPage, highPageNum, highLocation, direction);
+                            ApplyPage(outputPage, lowPageNum, lowLocation, direction);
                         }
 
                         _pdfOutputDoc.Save(Path.Combine(_outputSignatureFolder, $"Signature{signatureNumber + 1}.pdf"));
@@ -184,38 +202,22 @@ namespace BookbindingPdfMaker.Services
                 if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToRight)
                 {
                     gfx.RotateAtTransform(90, new XPoint(0, 0));
-                    box = new XRect(0, -width, height / 2, width);
+                    box = new XRect(0, -(paperWidth / 2) - (height / 2), width, height);
                 }
                 else if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToLeft)
                 {
                     gfx.RotateAtTransform(-90, new XPoint(0, 0));
-                    box = new XRect(-paperHeight / 2, 0, height / 2, width);
+                    box = new XRect(-paperHeight / 2, (paperWidth / 2) - (height / 2), width, height);
                 }
                 else if (outputLocation == OutputLocation.Bottom && pageDirection == PageDirection.TopToRight)
                 {
-                    if (_mwvm.AlternatePageRotation)
-                    {
-                        gfx.RotateAtTransform(90, new XPoint(0, 0));
-                        box = new XRect(paperHeight / 2, -width, height / 2, width);
-                    }
-                    else
-                    {
-                        gfx.RotateAtTransform(90, new XPoint(0, 0));
-                        box = new XRect(0, -width, height / 2, width);
-                    }
+                    gfx.RotateAtTransform(90, new XPoint(0, 0));
+                    box = new XRect(paperHeight / 2, -(paperWidth / 2) - (height / 2), width, height);
                 }
                 else
                 {
-                    if (_mwvm.AlternatePageRotation)
-                    {
-                        gfx.RotateAtTransform(-90, new XPoint(0, 0));
-                        box = new XRect(-paperHeight, 0, height / 2, width);
-                    }
-                    else
-                    {
-                        gfx.RotateAtTransform(-90, new XPoint(0, 0));
-                        box = new XRect(-paperHeight / 2, 0, height / 2, width);
-                    }
+                    gfx.RotateAtTransform(-90, new XPoint(0, 0));
+                    box = new XRect(-paperHeight, (paperWidth / 2) - (height / 2), width, height);
                 }
 
                 gfx.DrawImage(_pdfInputForm, box);
