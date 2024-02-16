@@ -7,7 +7,7 @@
         xmlns:models="clr-namespace:BookbindingPdfMaker.Models"
         xmlns:converters="clr-namespace:BookbindingPdfMaker.Converters"
         mc:Ignorable="d"
-        Title="Bookbinding PDF Maker" Height="335" Width="800"
+        Title="Bookbinding PDF Maker" Height="385" Width="800"
         ResizeMode="CanMinimize">
 
     <Window.DataContext>
@@ -45,6 +45,7 @@
             </Style>
             <converters:BoolToBookSizeConverter x:Key="BoolToBookSizeConverter"/>
             <converters:BoolToSignatureFormatConverter x:Key="BoolToSignatureFormatConverter"/>
+            <converters:BoolToPageUnitConverter x:Key="BoolToPageUnitConverter"/>
         </ResourceDictionary>
     </Window.Resources>
     <DockPanel>
@@ -77,6 +78,14 @@
                             <TextBlock Padding="0,0,4,0"># of Pages:</TextBlock>
                             <TextBlock Text="{Binding NumberOfPages}"/>
                         </StackPanel>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource GroupBorder}">
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Style="{StaticResource GroupTitle}">Units</TextBlock>
+                        <RadioButton IsChecked="{Binding PageUnit, Converter={StaticResource BoolToPageUnitConverter}, ConverterParameter=Inches}">Inches</RadioButton>
+                        <RadioButton IsChecked="{Binding PageUnit, Converter={StaticResource BoolToPageUnitConverter}, ConverterParameter=Millimeters}">Millimeters</RadioButton>
+                        <RadioButton IsChecked="{Binding PageUnit, Converter={StaticResource BoolToPageUnitConverter}, ConverterParameter=Points}">Points</RadioButton>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource GroupBorder}">

@@ -13,6 +13,8 @@ namespace BookbindingPdfMaker.Services
         private XPdfForm? _pdfInputForm;
         private string? _outputSignatureFolder;
         private int _defaultSignatureSize;
+        private double _outputBookWidth;
+        private double _outputBookHeight;
 
         public PdfMaker(MainWindowViewModel mwvm)
         {
@@ -34,6 +36,8 @@ namespace BookbindingPdfMaker.Services
         {
             _outputSignatureFolder = outputSignatureFolder;
             _defaultSignatureSize = 8;
+
+            CalculateBookSize();
 
             using (_pdfInputForm = XPdfForm.FromFile(inputPdfPath))
             {
@@ -66,6 +70,57 @@ namespace BookbindingPdfMaker.Services
                     signaturePageStart += currentSignatureSize * 4;
                 }
             }
+        }
+
+        private void CalculateBookSize()
+        {
+            float f;
+            switch (_mwvm.SizeOfBook)
+            {
+                case BookSize.StandardPaperback:
+                    float.TryParse(App.Configuration["BookSizes:StandardPaperback:Width"]!.ToString(), out f);
+                    _outputBookWidth = XUnit.FromInch(f).Point;
+
+                    float.TryParse(App.Configuration["BookSizes:StandardPaperback:Height"]!.ToString(), out f);
+                    _outputBookHeight = XUnit.FromInch(f).Point;
+                    break;
+
+                case BookSize.LargeFormatPaperback:
+                    float.TryParse(App.Configuration["BookSizes:LargePaperback:Width"]!.ToString(), out f);
+                    _outputBookWidth = XUnit.FromInch(f).Point;
+
+                    float.TryParse(App.Configuration["BookSizes:LargePaperback:Height"]!.ToString(), out f);
+                    _outputBookHeight = XUnit.FromInch(f).Point;
+                    break;
+
+                case BookSize.FullPaperSize:
+                    _outputBookWidth = XUnit.FromInch(_mwvm.SelectedPaperSize.Width).Point;
+                    _outputBookHeight = XUnit.FromInch(_mwvm.SelectedPaperSize.Height).Point;
+                    break;
+
+                default:
+
+                    switch (_mwvm.PageUnit)
+                    {
+                        case PageUnit.Inches:
+                            _outputBookWidth = XUnit.FromInch(_mwvm.CustomBookSizeWidthF).Point;
+                            _outputBookHeight = XUnit.FromInch(_mwvm.CustomBookSizeHeightF).Point;
+                            break;
+
+                        case PageUnit.Millimeters:
+                            _outputBookWidth = XUnit.FromMillimeter(_mwvm.CustomBookSizeWidthF).Point;
+                            _outputBookHeight = XUnit.FromMillimeter(_mwvm.CustomBookSizeHeightF).Point;
+                            break;
+
+                        case PageUnit.Points:
+                            _outputBookWidth = _mwvm.CustomBookSizeWidthF;
+                            _outputBookHeight = _mwvm.CustomBookSizeHeightF;
+                            break;
+                    }
+
+                    break;
+            }
+
         }
 
         private List<int> GetSignatureSizeList()
@@ -104,8 +159,8 @@ namespace BookbindingPdfMaker.Services
         {
             var newPage = _pdfOutputDoc!.AddPage();
             newPage.Orientation = PageOrientation.Portrait;
-            newPage.Width = _mwvm.SelectedPaperSize.Width;
-            newPage.Height = _mwvm.SelectedPaperSize.Height;
+            newPage.Width = XUnit.FromInch(_mwvm.SelectedPaperSize.Width);
+            newPage.Height = XUnit.FromInch(_mwvm.SelectedPaperSize.Height);
             return newPage;
         }
 
@@ -119,8 +174,10 @@ namespace BookbindingPdfMaker.Services
             using (var gfx = XGraphics.FromPdfPage(outputPage))
             {
                 _pdfInputForm.PageNumber = inputPageNum;
-                var width = outputPage.Width;
-                var height = outputPage.Height;
+                var width = _outputBookWidth;
+                var height = _outputBookHeight;
+                var paperWidth = outputPage.Width;
+                var paperHeight = outputPage.Height;
 
                 XRect box;
 
@@ -132,14 +189,14 @@ namespace BookbindingPdfMaker.Services
                 else if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToLeft)
                 {
                     gfx.RotateAtTransform(-90, new XPoint(0, 0));
-                    box = new XRect(-height / 2, 0, height / 2, width);
+                    box = new XRect(-paperHeight / 2, 0, height / 2, width);
                 }
                 else if (outputLocation == OutputLocation.Bottom && pageDirection == PageDirection.TopToRight)
                 {
                     if (_mwvm.AlternatePageRotation)
                     {
                         gfx.RotateAtTransform(90, new XPoint(0, 0));
-                        box = new XRect(height / 2, -width, height / 2, width);
+                        box = new XRect(paperHeight / 2, -width, height / 2, width);
                     }
                     else
                     {
@@ -152,16 +209,25 @@ namespace BookbindingPdfMaker.Services
                     if (_mwvm.AlternatePageRotation)
                     {
                         gfx.RotateAtTransform(-90, new XPoint(0, 0));
-                        box = new XRect(-height, 0, height / 2, width);
+                        box = new XRect(-paperHeight, 0, height / 2, width);
                     }
                     else
                     {
                         gfx.RotateAtTransform(-90, new XPoint(0, 0));
-                        box = new XRect(-height / 2, 0, height / 2, width);
+                        box = new XRect(-paperHeight / 2, 0, height / 2, width);
                     }
                 }
 
                 gfx.DrawImage(_pdfInputForm, box);
+                gfx.DrawEllipse(XBrushes.Red, new XRect(box.Left - 2.5, box.Top - 2.5, 5, 5));
+                gfx.DrawLines(XPens.LightBlue, new[]
+                {
+                    new XPoint(box.Left, box.Top),
+                    new XPoint(box.Left, box.Bottom),
+                    new XPoint(box.Right, box.Bottom),
+                    new XPoint(box.Right, box.Top),
+                    new XPoint(box.Left, box.Top)
+                });
             }
         }
     }

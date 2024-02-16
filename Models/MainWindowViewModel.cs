@@ -231,9 +231,15 @@ namespace BookbindingPdfMaker.Models
                 }
 
                 _customBookSizeWidth = value;
+                if (float.TryParse(value, out var f))
+                {
+                    CustomBookSizeWidthF = f;
+                }
                 OnPropertyChanged();
             }
         }
+
+        public float CustomBookSizeWidthF { get; private set; }
 
         private string _customBookSizeHeight = "";
         public string CustomBookSizeHeight
@@ -251,9 +257,15 @@ namespace BookbindingPdfMaker.Models
                 }
 
                 _customBookSizeHeight = value;
+                if (float.TryParse(value, out var f))
+                {
+                    CustomBookSizeHeightF = f;
+                }
                 OnPropertyChanged();
             }
         }
+
+        public float CustomBookSizeHeightF { get; private set; }
 
         private string _customSignatures = "";
         public string CustomSignatures
@@ -271,6 +283,26 @@ namespace BookbindingPdfMaker.Models
                 }
 
                 _customSignatures = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private PageUnit _pageUnit = PageUnit.Inches;
+        public PageUnit PageUnit
+        {
+            get
+            {
+                return _pageUnit;
+            }
+
+            set
+            {
+                if (value == _pageUnit)
+                {
+                    return;
+                }
+
+                _pageUnit = value;
                 OnPropertyChanged();
             }
         }

@@ -176,6 +176,7 @@ namespace BookbindingPdfMaker
         private void ButtonGenerateDocument_Click(object sender, RoutedEventArgs e)
         {
             _pdfMaker.Generate(@"c:\temp\dummy.pdf", @"c:\temp\dummy");
+            System.Windows.MessageBox.Show("The PDF has completed its generation", "PDF Complete", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void PaperSelectionCombo_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
