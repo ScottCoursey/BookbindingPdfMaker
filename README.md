@@ -1,5 +1,5 @@
 # BookbindingPdfMaker
-A program to convert a single PDF into signatures for bookbinding.
+A program to convert a single PDF into signatures for bookbinding.  I would recommend using the "Output Test Overlay" option to make sure the output will fit on your pages.  The primary feature I want to add to this program is to "stack" a page for output so it can be run through a paper cutter to get the grain in the proper direction more easily than purchasing specialty paper.  By "stack", I mean a single face of an output page contains four pages from the PDF.  Think of a legal size paper.  The top half would result in a signature that is 8.5" x 7", and folds to be a small notebook that is 4.25" x 7".
 
 # Installation
 The installation is pretty straightforward.
