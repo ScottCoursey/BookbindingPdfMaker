@@ -174,6 +174,7 @@ namespace BookbindingPdfMaker.Services
                 case SignatureFormat.CustomSignatures:
                     var split = _mwvm.CustomSignatures.Split(" ");
                     result.SignatureSizeList = split.Select(str => { int.TryParse(str, out var val); return val; }).ToList();
+                    result.FullPageCount = result.SignatureSizeList.Sum(pc => pc) * 4;
                     return result;
             }
 

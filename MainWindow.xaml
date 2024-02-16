@@ -7,7 +7,7 @@
         xmlns:models="clr-namespace:BookbindingPdfMaker.Models"
         xmlns:converters="clr-namespace:BookbindingPdfMaker.Converters"
         mc:Ignorable="d"
-        Title="Bookbinding PDF Maker" Height="424" Width="900"
+        Title="Bookbinding PDF Maker" Height="425" Width="900"
         ResizeMode="CanMinimize">
 
     <Window.DataContext>
@@ -47,7 +47,6 @@
             <converters:BoolToSignatureFormatConverter x:Key="BoolToSignatureFormatConverter"/>
             <converters:BoolToPageUnitConverter x:Key="BoolToPageUnitConverter"/>
             <converters:BoolToSourcePageAlignmentConverter x:Key="BoolToSourcePageAlignmentConverter"/>
-            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         </ResourceDictionary>
     </Window.Resources>
     <DockPanel>
@@ -195,7 +194,6 @@
                         <RadioButton x:Name="StangardSignatureRadioButton" Click="StangardSignatureRadioButton_Click" IsChecked="{Binding FormatOfSignature, Converter={StaticResource BoolToSignatureFormatConverter}, ConverterParameter=StandardSignatures}">Standard Signatures</RadioButton>
                         <RadioButton x:Name="CustomSignaturesRadioButton" Click="CustomSignaturesRadioButton_Click" IsChecked="{Binding FormatOfSignature, Converter={StaticResource BoolToSignatureFormatConverter}, ConverterParameter=CustomSignatures}">Custom Signatures</RadioButton>
                         <TextBox x:Name="CustomSignatureTextBox" TextChanged="CustomSignatureTextBox_TextChanged" Text="{Binding CustomSignatures, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsCustomSignatureFormat}"></TextBox>
-                        <TextBlock Foreground="Red" FontWeight="Bold" HorizontalAlignment="Center" Visibility="{Binding InvalidCustomSignatures, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Visible}">Invalid Custom Signatures</TextBlock>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource GroupBorder}">

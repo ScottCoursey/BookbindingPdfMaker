@@ -309,26 +309,6 @@ namespace BookbindingPdfMaker.Models
             }
         }
 
-        private bool _invalidCustomSignatures = false;
-        public bool InvalidCustomSignatures
-        {
-            get
-            {
-                return _invalidCustomSignatures;
-            }
-
-            set
-            {
-                if (value == _invalidCustomSignatures)
-                {
-                    return;
-                }
-
-                _invalidCustomSignatures = value;
-                OnPropertyChanged();
-            }
-        }
-
         private PageUnit _pageUnit = PageUnit.Inches;
         public PageUnit PageUnit
         {
