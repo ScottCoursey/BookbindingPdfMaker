@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookbindingPdfMaker", "BookbindingPdfMaker.csproj", "{A4B7495E-F4C6-43F6-BE4F-8AA5E46E2F9E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookbindingPdfMaker", "BookbindingPdfMaker.Windows/BookbindingPdfMaker.csproj", "{A4B7495E-F4C6-43F6-BE4F-8AA5E46E2F9E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
