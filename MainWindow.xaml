@@ -7,7 +7,7 @@
         xmlns:models="clr-namespace:BookbindingPdfMaker.Models"
         xmlns:converters="clr-namespace:BookbindingPdfMaker.Converters"
         mc:Ignorable="d"
-        Title="Bookbinding PDF Maker" Height="385" Width="800"
+        Title="Bookbinding PDF Maker" Height="424" Width="900"
         ResizeMode="CanMinimize">
 
     <Window.DataContext>
@@ -46,6 +46,8 @@
             <converters:BoolToBookSizeConverter x:Key="BoolToBookSizeConverter"/>
             <converters:BoolToSignatureFormatConverter x:Key="BoolToSignatureFormatConverter"/>
             <converters:BoolToPageUnitConverter x:Key="BoolToPageUnitConverter"/>
+            <converters:BoolToSourcePageAlignmentConverter x:Key="BoolToSourcePageAlignmentConverter"/>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         </ResourceDictionary>
     </Window.Resources>
     <DockPanel>
@@ -70,14 +72,28 @@
                 <Border Style="{StaticResource GroupBorder}">
                     <StackPanel Orientation="Vertical">
                         <TextBlock Style="{StaticResource GroupTitle}">Input PDF Info</TextBlock>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Padding="0,0,4,0">File Name:</TextBlock>
-                            <TextBlock Text="{Binding FileName}"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Padding="0,0,4,0"># of Pages:</TextBlock>
-                            <TextBlock Text="{Binding NumberOfPages}"/>
-                        </StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="25"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Padding="0,0,4,0">File Name:</TextBlock>
+                            <TextBlock VerticalAlignment="Center" Grid.Row="0" Grid.Column="1" Text="{Binding FileName}"/>
+                            <Button x:Name="FileOpenButton" Click="MenuFileOpenInputPdf_Click" Margin="4" Grid.Row="0" Grid.Column="2">...</Button>
+
+                            <TextBlock VerticalAlignment="Center" Grid.Row="1" Grid.Column="0" Padding="0,0,4,0">Output Folder:</TextBlock>
+                            <TextBlock VerticalAlignment="Center" Grid.Row="1" Grid.Column="1" Text="{Binding OutputPath}"/>
+                            <Button x:Name="OutputPathButton" Click="MenuFileSetOutputFolder_Click" Margin="4" Grid.Row="1" Grid.Column="2">...</Button>
+
+                            <TextBlock VerticalAlignment="Center" Grid.Row="2" Grid.Column="0" Padding="0,0,4,0"># of Pages:</TextBlock>
+                            <TextBlock VerticalAlignment="Center" Grid.Row="2" Grid.Column="1" Text="{Binding NumberOfPages}"/>
+                        </Grid>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource GroupBorder}">
@@ -103,7 +119,7 @@
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
-                        
+
                         <TextBlock Style="{StaticResource SubTitle}">Printer Type</TextBlock>
                         <ComboBox x:Name="PrinterTypeComboBox"
                                   SelectedItem="{Binding SelectedPrinterType}"
@@ -140,9 +156,9 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="0,0,4,0">Width:</TextBlock>
-                            <TextBox Grid.Column="2" IsEnabled="{Binding IsCustomBookSize}" Text="{Binding CustomBookSizeWidth, Mode=TwoWay}"></TextBox>
+                            <TextBox Grid.Column="2" PreviewTextInput="TextInputOnlyAllowNumeric" IsEnabled="{Binding IsCustomBookSize}" Text="{Binding CustomBookSizeWidth, Mode=TwoWay}"></TextBox>
                             <TextBlock Grid.Column="4" VerticalAlignment="Center" Margin="0,0,4,0">Height:</TextBlock>
-                            <TextBox Grid.Column="5" IsEnabled="{Binding IsCustomBookSize}" Text="{Binding CustomBookSizeHeight, Mode=TwoWay}"></TextBox>
+                            <TextBox Grid.Column="5" PreviewTextInput="TextInputOnlyAllowNumeric" IsEnabled="{Binding IsCustomBookSize}" Text="{Binding CustomBookSizeHeight, Mode=TwoWay}"></TextBox>
                         </Grid>
                         <TextBlock Style="{StaticResource SubTitle}">Page Scaling</TextBlock>
                         <ComboBox x:Name="ScaleOfPageComboBox"
@@ -159,8 +175,14 @@
                 <Border Style="{StaticResource GroupBorder}">
                     <StackPanel Orientation="Vertical">
                         <TextBlock Style="{StaticResource GroupTitle}">Options</TextBlock>
-                        <CheckBox IsChecked="{Binding AddFlyleaf, Mode=TwoWay}">Add Flyleaf</CheckBox>
+                        <CheckBox x:Name="FlyleafCheckbox" Click="FlyleafCheckbox_Click" IsChecked="{Binding AddFlyleaf, Mode=TwoWay}" >Add Flyleaf</CheckBox>
                         <CheckBox IsChecked="{Binding OutputTestOverlay, Mode=TwoWay}">Output Test Overlay</CheckBox>
+                        <TextBlock>Source Page Alignment:</TextBlock>
+                        <RadioButton Margin="8, 4, 0, 4" IsChecked="{Binding SourcePageAlignment, Converter={StaticResource BoolToSourcePageAlignmentConverter}, ConverterParameter=Centered}">Centered</RadioButton>
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Margin="8, 0, 0, 0" IsChecked="{Binding SourcePageAlignment, Converter={StaticResource BoolToSourcePageAlignmentConverter}, ConverterParameter=OffsetFromSpine}">Offset From Spine:</RadioButton>
+                            <TextBox PreviewTextInput="TextInputOnlyAllowNumeric" Text="{Binding OffsetFromSpine, Mode=TwoWay}" IsEnabled="{Binding IsOffsetFromSpine}" Margin="4, 0, 0, 0" Width="50"></TextBox>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
             </StackPanel>
@@ -168,11 +190,12 @@
                 <Border Style="{StaticResource GroupBorder}">
                     <StackPanel Orientation="Vertical">
                         <TextBlock Style="{StaticResource GroupTitle}">Signature Format</TextBlock>
-                        <RadioButton IsChecked="{Binding FormatOfSignature, Converter={StaticResource BoolToSignatureFormatConverter}, ConverterParameter=Booklet}">Booklet</RadioButton>
-                        <RadioButton IsChecked="{Binding FormatOfSignature, Converter={StaticResource BoolToSignatureFormatConverter}, ConverterParameter=PerfectBound}">Perfect Bound</RadioButton>
-                        <RadioButton IsChecked="{Binding FormatOfSignature, Converter={StaticResource BoolToSignatureFormatConverter}, ConverterParameter=StandardSignatures}">Standard Signatures</RadioButton>
-                        <RadioButton IsChecked="{Binding FormatOfSignature, Converter={StaticResource BoolToSignatureFormatConverter}, ConverterParameter=CustomSignatures}">Custom Signatures</RadioButton>
-                        <TextBox Text="{Binding CustomSignatures, Mode=TwoWay}" IsEnabled="{Binding IsCustomSignatureFormat}"></TextBox>
+                        <RadioButton x:Name="BookletRadioButton" Click="BookletRadioButton_Click" IsChecked="{Binding FormatOfSignature, Converter={StaticResource BoolToSignatureFormatConverter}, ConverterParameter=Booklet}">Booklet</RadioButton>
+                        <RadioButton x:Name="PerfectBoundRadioButton" Click="PerfectBoundRadioButton_Click" IsChecked="{Binding FormatOfSignature, Converter={StaticResource BoolToSignatureFormatConverter}, ConverterParameter=PerfectBound}">Perfect Bound</RadioButton>
+                        <RadioButton x:Name="StangardSignatureRadioButton" Click="StangardSignatureRadioButton_Click" IsChecked="{Binding FormatOfSignature, Converter={StaticResource BoolToSignatureFormatConverter}, ConverterParameter=StandardSignatures}">Standard Signatures</RadioButton>
+                        <RadioButton x:Name="CustomSignaturesRadioButton" Click="CustomSignaturesRadioButton_Click" IsChecked="{Binding FormatOfSignature, Converter={StaticResource BoolToSignatureFormatConverter}, ConverterParameter=CustomSignatures}">Custom Signatures</RadioButton>
+                        <TextBox x:Name="CustomSignatureTextBox" TextChanged="CustomSignatureTextBox_TextChanged" Text="{Binding CustomSignatures, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsCustomSignatureFormat}"></TextBox>
+                        <TextBlock Foreground="Red" FontWeight="Bold" HorizontalAlignment="Center" Visibility="{Binding InvalidCustomSignatures, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Visible}">Invalid Custom Signatures</TextBlock>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource GroupBorder}">
@@ -180,20 +203,20 @@
                         <TextBlock Style="{StaticResource GroupTitle}">Signature Info</TextBlock>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Padding="0,0,4,0">Total Pages:</TextBlock>
-                            <TextBlock>0</TextBlock>
+                            <TextBlock Text="{Binding TotalPages}"></TextBlock>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Padding="0,0,4,0">Total Sheets:</TextBlock>
-                            <TextBlock>0</TextBlock>
+                            <TextBlock Text="{Binding TotalSheets}"></TextBlock>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Padding="0,0,4,0"># of Signatures:</TextBlock>
-                            <TextBlock>0</TextBlock>
+                            <TextBlock Text="{Binding NumberOfSignatures}"></TextBlock>
                         </StackPanel>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource GroupBorder}">
-                    <Button x:Name="ButtonGenerateDocument" Click="ButtonGenerateDocument_Click" Margin="8" Padding="4" IsEnabled="True">Generate Document</Button>
+                    <Button x:Name="ButtonGenerateDocument" Click="ButtonGenerateDocument_Click" Margin="8" Padding="4" IsEnabled="False">Generate Document</Button>
                 </Border>
             </StackPanel>
         </Grid>

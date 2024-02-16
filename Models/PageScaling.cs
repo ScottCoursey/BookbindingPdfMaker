@@ -3,6 +3,7 @@
     internal enum PageScaling
     {
         Stretch,
-        KeepProportion
+        KeepProportionWidth,
+        KeepProportionHeight
     }
 }

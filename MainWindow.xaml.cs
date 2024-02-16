@@ -7,9 +7,6 @@ using System.Windows;
 
 namespace BookbindingPdfMaker
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         private IPdfMaker _pdfMaker;
@@ -28,7 +25,7 @@ namespace BookbindingPdfMaker
             _mwvm.SelectedPrinterType = _mwvm.PrinterTypes.First(printerType => printerType.IsDuplex == true);
 
             _mwvm.ScaleOfPages = LoadScaleOfPages();
-            _mwvm.SelectedScaleOfPage = _mwvm.ScaleOfPages.First(scaleOfPage => scaleOfPage.ScaleOfPage == PageScaling.KeepProportion);
+            _mwvm.SelectedScaleOfPage = _mwvm.ScaleOfPages.First(scaleOfPage => scaleOfPage.ScaleOfPage == PageScaling.KeepProportionWidth);
 
             DataContext = _mwvm;
         }
@@ -69,8 +66,13 @@ namespace BookbindingPdfMaker
                 },
                 new PageScale()
                 {
-                    Name = "Keep Proportion",
-                    ScaleOfPage = PageScaling.KeepProportion
+                    Name = "Keep Proportion (by Width)",
+                    ScaleOfPage = PageScaling.KeepProportionWidth
+                },
+                new PageScale()
+                {
+                    Name = "Keep Proportion (by Height)",
+                    ScaleOfPage = PageScaling.KeepProportionHeight
                 }
             };
         }
@@ -94,18 +96,24 @@ namespace BookbindingPdfMaker
                 else
                 {
                     _pdfMaker.SetInputFileName(fileName);
-                    UpdateFileRelevantInfo(fileName);
+                    UpdateFileRelevantInfo();
                     CheckOutputPath();
                 }
             }
         }
 
-        private void UpdateFileRelevantInfo(string fileName)
+        private void UpdateFileRelevantInfo()
         {
-            using (var pdfForm = XPdfForm.FromFile(fileName))
+            if (string.IsNullOrEmpty(_mwvm.InputFilePath))
             {
-                _mwvm.NumberOfPages = pdfForm.PageCount.ToString();
+                return;
             }
+
+            var signatureInfo = _pdfMaker.ReadSignatureInfo(_mwvm.InputFilePath);
+            _mwvm.TotalPages = signatureInfo.FullPageCount;
+            _mwvm.TotalSheets = signatureInfo.SignatureSizeList.Sum(size => size);
+            _mwvm.NumberOfSignatures = signatureInfo.SignatureSizeList.Count();
+            _mwvm.NumberOfPages = _pdfMaker.PdfInputForm.PageCount.ToString();
         }
 
         private void MenuFileSetOutputFolder_Click(object sender, RoutedEventArgs e)
@@ -122,38 +130,28 @@ namespace BookbindingPdfMaker
 
         private void CheckOutputPath()
         {
-            //if (string.IsNullOrEmpty(_mwvm.FileName) || string.IsNullOrEmpty(_mwvm.OutputPath))
-            //{
-            //    ButtonGenerateDocument.IsEnabled = false;
-            //    return;
-            //}
+            if (string.IsNullOrEmpty(_mwvm.FileName) || string.IsNullOrEmpty(_mwvm.OutputPath))
+            {
+                ButtonGenerateDocument.IsEnabled = false;
+                return;
+            }
 
-            //// Does the input file name exist?  It really should...
-            //if (!File.Exists(Path.Combine(_mwvm.InputPath, _mwvm.FileName)))
-            //{
-            //    System.Windows.MessageBox.Show("The input file does not exist.", "Input File Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            //    return;
-            //}
+            // Does the input file name exist?  It really should...
+            if (!File.Exists(Path.Combine(_mwvm.InputPath, _mwvm.FileName)))
+            {
+                System.Windows.MessageBox.Show("The input file does not exist.", "Input File Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
-            //// The final output folder must contain the input file name without the .pdf extension.
-            //var fileName = Path.GetFileNameWithoutExtension(_mwvm.FileName);
-            //if (!_mwvm.OutputPath.EndsWith(fileName))
-            //{
-            //    _mwvm.OutputPath = Path.Combine(_mwvm.OutputPath, fileName);
-            //}
-
-            //// If the folder already exists, it might have a previous extraction.  Prompt for its removal.
-            //if (Directory.Exists(_mwvm.OutputPath))
-            //{
-            //    if (System.Windows.MessageBox.Show("The selected output folder already exists, which means it may have information from a previous signature extration or some other data.  Are you sure you want to remove it?", "Remove Previous Output", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
-            //    {
-            //        Directory.Delete(_mwvm.OutputPath);
-            //    }
-            //    else
-            //    {
-            //        return;
-            //    }
-            //}
+            // The final output folder must contain the input file name without the .pdf extension.
+            if (Path.Exists(_mwvm.OutputPath))
+            {
+                var fileName = Path.GetFileNameWithoutExtension(_mwvm.FileName);
+                if (!_mwvm.OutputPath.EndsWith(fileName))
+                {
+                    _mwvm.OutputPath = Path.Combine(_mwvm.OutputPath, fileName);
+                }
+            }
 
             ButtonGenerateDocument.IsEnabled = true;
         }
@@ -175,7 +173,22 @@ namespace BookbindingPdfMaker
 
         private void ButtonGenerateDocument_Click(object sender, RoutedEventArgs e)
         {
-            _pdfMaker.Generate(@"c:\temp\dummy.pdf", @"c:\temp\dummy");
+            // If the folder already exists, it might have a previous extraction.  Prompt for its removal.
+            if (Directory.Exists(_mwvm.OutputPath))
+            {
+                if (System.Windows.MessageBox.Show("The selected output folder already exists, which means it may have information from a previous signature extration or some other data.  Are you sure you want to remove it?", "Remove Previous Output", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                {
+                    Directory.Delete(_mwvm.OutputPath, true);
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            Directory.CreateDirectory(_mwvm.OutputPath);
+
+            _pdfMaker.Generate(_mwvm.InputFilePath, _mwvm.OutputPath);
             System.Windows.MessageBox.Show("The PDF has completed its generation", "PDF Complete", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
@@ -186,6 +199,59 @@ namespace BookbindingPdfMaker
         private void PrinterTypeComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
 
+        }
+
+        private void TextInputOnlyAllowNumeric(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            bool approvedDecimalPoint = false;
+
+            if (e.Text == ".")
+            {
+                if (!((System.Windows.Controls.TextBox)sender).Text.Contains("."))
+                {
+                    approvedDecimalPoint = true;
+                }
+            }
+
+            if (!(char.IsDigit(e.Text, e.Text.Length - 1) || approvedDecimalPoint))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void FlyleafCheckbox_Click(object sender, RoutedEventArgs e)
+        {
+            UpdateFileRelevantInfo();
+        }
+
+        private void BookletRadioButton_Click(object sender, RoutedEventArgs e)
+        {
+            UpdateFileRelevantInfo();
+        }
+
+        private void PerfectBoundRadioButton_Click(object sender, RoutedEventArgs e)
+        {
+            UpdateFileRelevantInfo();
+        }
+
+        private void StangardSignatureRadioButton_Click(object sender, RoutedEventArgs e)
+        {
+            UpdateFileRelevantInfo();
+        }
+
+        private void CustomSignaturesRadioButton_Click(object sender, RoutedEventArgs e)
+        {
+            UpdateFileRelevantInfo();
+        }
+
+        private void CustomSignatureTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            if (_mwvm == null)
+            {
+                return;
+            }
+
+            UpdateFileRelevantInfo();
         }
     }
 }

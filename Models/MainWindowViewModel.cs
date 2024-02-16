@@ -7,6 +7,8 @@ namespace BookbindingPdfMaker.Models
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public string InputFilePath;
+
         private string _fileName = "No File Selected";
         public string FileName
         {
@@ -67,7 +69,7 @@ namespace BookbindingPdfMaker.Models
             }
         }
 
-        private string _outputPath = "";
+        private string _outputPath = "No Folder Selected";
         public string OutputPath
         {
             get
@@ -307,6 +309,26 @@ namespace BookbindingPdfMaker.Models
             }
         }
 
+        private bool _invalidCustomSignatures = false;
+        public bool InvalidCustomSignatures
+        {
+            get
+            {
+                return _invalidCustomSignatures;
+            }
+
+            set
+            {
+                if (value == _invalidCustomSignatures)
+                {
+                    return;
+                }
+
+                _invalidCustomSignatures = value;
+                OnPropertyChanged();
+            }
+        }
+
         private PageUnit _pageUnit = PageUnit.Inches;
         public PageUnit PageUnit
         {
@@ -323,6 +345,127 @@ namespace BookbindingPdfMaker.Models
                 }
 
                 _pageUnit = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private SourcePageAlignment _sourcePageAlignment = SourcePageAlignment.Centered;
+        public SourcePageAlignment SourcePageAlignment
+        {
+            get
+            {
+                return _sourcePageAlignment;
+            }
+
+            set
+            {
+                if (value == _sourcePageAlignment)
+                {
+                    return;
+                }
+
+                _sourcePageAlignment = value;
+                IsOffsetFromSpine = value == SourcePageAlignment.OffsetFromSpine;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isOffsetFromSpine = false;
+        public bool IsOffsetFromSpine
+        {
+            get
+            {
+                return _isOffsetFromSpine;
+            }
+
+            set
+            {
+                if (value == _isOffsetFromSpine)
+                {
+                    return;
+                }
+
+                _isOffsetFromSpine = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private float _offsetFromSpine = 0.5f;
+        public float OffsetFromSpine
+        {
+            get
+            {
+                return _offsetFromSpine;
+            }
+
+            set
+            {
+                if (value == _offsetFromSpine)
+                {
+                    return;
+                }
+
+                _offsetFromSpine = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private int _totalPages;
+        public int TotalPages
+        {
+            get
+            {
+                return _totalPages;
+            }
+
+            set
+            {
+                if (value == _totalPages)
+                {
+                    return;
+                }
+
+                _totalPages = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private int _totalSheets;
+        public int TotalSheets
+        {
+            get
+            {
+                return _totalSheets;
+            }
+
+            set
+            {
+                if (value == _totalSheets)
+                {
+                    return;
+                }
+
+                _totalSheets = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private int _numberOfSignatures;
+        public int NumberOfSignatures
+        {
+            get
+            {
+                return _numberOfSignatures;
+            }
+
+            set
+            {
+                if (value == _numberOfSignatures)
+                {
+                    return;
+                }
+
+                _numberOfSignatures = value;
                 OnPropertyChanged();
             }
         }
