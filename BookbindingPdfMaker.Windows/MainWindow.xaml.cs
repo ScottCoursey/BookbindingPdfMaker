@@ -131,7 +131,7 @@ namespace BookbindingPdfMaker
             }
 
             _mwvm.NumberOfSignatures = signatureInfo.SignatureSizeList.Where(sig => sig > 0).Count();
-            _mwvm.NumberOfPages = _pdfMaker.PdfInputForm.PageCount.ToString();
+            _mwvm.NumberOfPages = _pdfMaker.PdfInputForm!.PageCount.ToString();
         }
 
         private void MenuFileSetOutputFolder_Click(object sender, RoutedEventArgs e)

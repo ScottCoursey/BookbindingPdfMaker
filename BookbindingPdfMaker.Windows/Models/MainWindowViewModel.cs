@@ -5,9 +5,9 @@ namespace BookbindingPdfMaker.Models
 {
     internal class MainWindowViewModel : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
-        public string InputFilePath;
+        public string InputFilePath = "";
 
         private string _fileName = "No File Selected";
         public string FileName
@@ -470,14 +470,14 @@ namespace BookbindingPdfMaker.Models
             }
         }
 
-        public IEnumerable<PageScale> ScaleOfPages { get; set; }
-        public PageScale SelectedScaleOfPage { get; set; }
+        public IEnumerable<PageScale> ScaleOfPages { get; set; } = [];
+        public PageScale? SelectedScaleOfPage { get; set; }
 
-        public IEnumerable<PrinterType> PrinterTypes { get; set; }
-        public PrinterType SelectedPrinterType { get; set; }
+        public IEnumerable<PrinterType> PrinterTypes { get; set; } = [];
+        public PrinterType? SelectedPrinterType { get; set; }
 
-        public IEnumerable<PaperDefinition> PaperSizes { get; set; }
-        public PaperDefinition SelectedPaperSize { get; set; }
+        public IEnumerable<PaperDefinition> PaperSizes { get; set; } = [];
+        public PaperDefinition? SelectedPaperSize { get; set; }
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
         {

@@ -4,7 +4,7 @@ namespace BookbindingPdfMaker.Services
 {
     internal interface IPdfMaker
     {
-        XPdfForm PdfInputForm { get; }
+        XPdfForm? PdfInputForm { get; }
 
         void Generate(string inputPdfPath, string outputSignatureFolder);
         void SetInputFileName(string fileName);

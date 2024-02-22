@@ -67,7 +67,7 @@ namespace BookbindingPdfMaker.Services
                     using (_pdfOutputDoc = new PdfDocument())
                     {
                         var signaturePageNumberMax = currentSignatureSetSize * 2;
-                        for (var signaturePageNumber = 0; signaturePageNumber < signaturePageNumberMax; signaturePageNumber++)// signaturePageNumber += signatureIncrement)
+                        for (var signaturePageNumber = 0; signaturePageNumber < signaturePageNumberMax; signaturePageNumber++)
                         {
                             var outputPage = AddPage();
 
@@ -170,8 +170,8 @@ namespace BookbindingPdfMaker.Services
                     break;
 
                 case BookSize.FullPaperSize:
-                    _outputBookWidth = XUnit.FromInch(_mwvm.SelectedPaperSize.Height / 2).Point;
-                    _outputBookHeight = XUnit.FromInch(_mwvm.SelectedPaperSize.Width).Point;
+                    _outputBookWidth = XUnit.FromInch(_mwvm.SelectedPaperSize!.Height / 2).Point;
+                    _outputBookHeight = XUnit.FromInch(_mwvm.SelectedPaperSize!.Width).Point;
                     break;
 
                 default:
@@ -268,8 +268,8 @@ namespace BookbindingPdfMaker.Services
         {
             var newPage = _pdfOutputDoc!.AddPage();
             newPage.Orientation = PageOrientation.Portrait;
-            newPage.Width = XUnit.FromInch(_mwvm.SelectedPaperSize.Width);
-            newPage.Height = XUnit.FromInch(_mwvm.SelectedPaperSize.Height);
+            newPage.Width = XUnit.FromInch(_mwvm.SelectedPaperSize!.Width);
+            newPage.Height = XUnit.FromInch(_mwvm.SelectedPaperSize!.Height);
             return newPage;
         }
 
@@ -305,9 +305,9 @@ namespace BookbindingPdfMaker.Services
                 var width = _outputBookWidth;
                 var height = _outputBookHeight;
 
-                if (_mwvm.SelectedScaleOfPage.ScaleOfPage != PageScaling.Stretch)
+                if (_mwvm.SelectedScaleOfPage!.ScaleOfPage != PageScaling.Stretch)
                 {
-                    var aspectRatio = PdfInputForm.Width / PdfInputForm.Height;
+                    var aspectRatio = PdfInputForm.PointWidth / PdfInputForm.PointHeight;
                     if (_mwvm.SelectedScaleOfPage.ScaleOfPage == PageScaling.KeepProportionWidth)
                     {
                         height = width / aspectRatio;
@@ -456,29 +456,29 @@ namespace BookbindingPdfMaker.Services
 
                 if (_mwvm.OutputTestOverlay)
                 {
-                    gfx.DrawLines(XPens.LightPink, new[]
-                    {
+                    gfx.DrawLines(XPens.LightPink,
+                    [
                         new XPoint(0, paperHeight / 2),
                         new XPoint(paperWidth, paperHeight / 2)
-                    });
+                    ]);
 
                     if (_mwvm.LayoutIsStacked)
                     {
-                        gfx.DrawLines(XPens.LightPink, new[]
-                        {
+                        gfx.DrawLines(XPens.LightPink,
+                        [
                             new XPoint(paperWidth / 2, 0),
                             new XPoint(paperWidth / 2, paperHeight)
-                        });
+                        ]);
                     }
 
-                    gfx.DrawLines(XPens.LightBlue, new[]
-                    {
+                    gfx.DrawLines(XPens.LightBlue,
+                    [
                         new XPoint(box.Left, box.Top),
                         new XPoint(box.Left, box.Bottom),
                         new XPoint(box.Right, box.Bottom),
                         new XPoint(box.Right, box.Top),
                         new XPoint(box.Left, box.Top)
-                    });
+                    ]);
                 }
             }
         }
