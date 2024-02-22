@@ -323,15 +323,6 @@ namespace BookbindingPdfMaker.Services
 
                 XRect box;
 
-                if (_mwvm.OutputTestOverlay)
-                {
-                    gfx.DrawLines(XPens.LightPink, new[]
-                    {
-                        new XPoint(0, paperHeight / 2),
-                        new XPoint(paperWidth, paperHeight / 2)
-                    });
-                }
-
                 double rotation = 0;
                 double top = 0;
                 double left = 0;
@@ -345,23 +336,23 @@ namespace BookbindingPdfMaker.Services
                         switch (outputLocation)
                         {
                             case OutputLocation.TopLeft:
-                                left = 0;
-                                top = 0;
+                                left = (paperWidth / 4) - (width / 2);
+                                top = (paperHeight / 4) - (height / 2);
                                 break;
 
                             case OutputLocation.TopRight:
-                                left = paperWidth / 2;
-                                top = 0;
+                                left = (paperWidth * 3 / 4) - (width / 2);
+                                top = (paperHeight / 4) - (height / 2);
                                 break;
 
                             case OutputLocation.BottomLeft:
-                                left = 0;
-                                top = paperHeight / 2;
+                                left = (paperWidth / 4) - (width / 2);
+                                top = (paperHeight * 3 / 4) - (height / 2);
                                 break;
 
                             case OutputLocation.BottomRight:
-                                left = paperWidth / 2;
-                                top = paperHeight / 2;
+                                left = (paperWidth * 3 / 4) - (width / 2);
+                                top = (paperHeight * 3 / 4) - (height / 2);
                                 break;
                         }
                     }
@@ -402,23 +393,23 @@ namespace BookbindingPdfMaker.Services
                         switch (outputLocation)
                         {
                             case OutputLocation.TopLeft:
-                                left = 0;
-                                top = 0;
+                                left = (paperWidth / 2) - width - offsetFromSpineAmount;
+                                top = (paperHeight / 4) - (height / 2);
                                 break;
 
                             case OutputLocation.TopRight:
-                                left = paperWidth / 2;
-                                top = 0;
+                                left = (paperWidth / 2) + offsetFromSpineAmount;
+                                top = (paperHeight / 4) - (height / 2);
                                 break;
 
                             case OutputLocation.BottomLeft:
-                                left = 0;
-                                top = paperHeight / 2;
+                                left = (paperWidth / 2) - width - offsetFromSpineAmount;
+                                top = (paperHeight * 3 / 4) - (height / 2);
                                 break;
 
                             case OutputLocation.BottomRight:
-                                left = paperWidth / 2;
-                                top = paperHeight / 2;
+                                left = (paperWidth / 2) + offsetFromSpineAmount;
+                                top = (paperHeight * 3 / 4) - (height / 2);
                                 break;
                         }
                     }
@@ -465,6 +456,21 @@ namespace BookbindingPdfMaker.Services
 
                 if (_mwvm.OutputTestOverlay)
                 {
+                    gfx.DrawLines(XPens.LightPink, new[]
+                    {
+                        new XPoint(0, paperHeight / 2),
+                        new XPoint(paperWidth, paperHeight / 2)
+                    });
+
+                    if (_mwvm.LayoutIsStacked)
+                    {
+                        gfx.DrawLines(XPens.LightPink, new[]
+                        {
+                            new XPoint(paperWidth / 2, 0),
+                            new XPoint(paperWidth / 2, paperHeight)
+                        });
+                    }
+
                     gfx.DrawLines(XPens.LightBlue, new[]
                     {
                         new XPoint(box.Left, box.Top),
