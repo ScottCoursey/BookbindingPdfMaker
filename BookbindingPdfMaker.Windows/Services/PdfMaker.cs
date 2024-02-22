@@ -154,13 +154,15 @@ namespace BookbindingPdfMaker.Services
 
         private SignatureInfo GetSignatureInfo()
         {
+            var inputPagesPerOutputPage = _mwvm.LayoutIsStacked ? 8 : 4;
+
             var result = new SignatureInfo();
-            var pageCount = PdfInputForm!.PageCount + (_mwvm.AddFlyleaf ? 4 : 0);
+            var pageCount = PdfInputForm!.PageCount + (_mwvm.AddFlyleaf ? inputPagesPerOutputPage : 0);
 
             switch (_mwvm.FormatOfSignature)
             {
                 case SignatureFormat.Booklet:
-                    _defaultSignatureSize = (pageCount / 4) + (pageCount % 4 > 0 ? 1 : 0);
+                    _defaultSignatureSize = (pageCount / inputPagesPerOutputPage) + (pageCount % inputPagesPerOutputPage > 0 ? 1 : 0);
                     break;
 
                 case SignatureFormat.PerfectBound:
@@ -174,20 +176,20 @@ namespace BookbindingPdfMaker.Services
                 case SignatureFormat.CustomSignatures:
                     var split = _mwvm.CustomSignatures.Split(" ");
                     result.SignatureSizeList = split.Select(str => { int.TryParse(str, out var val); return val; }).ToList();
-                    result.FullPageCount = result.SignatureSizeList.Sum(pc => pc) * 4;
+                    result.FullPageCount = result.SignatureSizeList.Sum(pc => pc) * inputPagesPerOutputPage;
                     return result;
             }
 
-            var numberOfFullSignatures = pageCount / (_defaultSignatureSize * 4);
-            var pagesInPartialSignature = pageCount % (_defaultSignatureSize * 4);
+            var numberOfFullSignatures = pageCount / (_defaultSignatureSize * inputPagesPerOutputPage);
+            var pagesInPartialSignature = pageCount % (_defaultSignatureSize * inputPagesPerOutputPage);
 
             List<int> signatureSizeList = Enumerable.Repeat(_defaultSignatureSize, numberOfFullSignatures).ToList();
             if (pagesInPartialSignature > 0)
             {
-                var extraPageCount = (pagesInPartialSignature / 4) + (pagesInPartialSignature % 4 > 0 ? 1 : 0);
+                var extraPageCount = (pagesInPartialSignature / inputPagesPerOutputPage) + (pagesInPartialSignature % inputPagesPerOutputPage > 0 ? 1 : 0);
                 signatureSizeList.Add(extraPageCount);
             }
-            result.FullPageCount = pageCount + (pagesInPartialSignature % 4 > 0 ? 1 : 0);
+            result.FullPageCount = pageCount + (pagesInPartialSignature % inputPagesPerOutputPage > 0 ? 1 : 0);
 
             var lastUpdated = -1;
 

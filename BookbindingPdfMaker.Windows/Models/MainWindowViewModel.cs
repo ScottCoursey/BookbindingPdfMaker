@@ -217,6 +217,26 @@ namespace BookbindingPdfMaker.Models
             }
         }
 
+        private bool _layoutIsStacked = false;
+        public bool LayoutIsStacked
+        {
+            get
+            {
+                return _layoutIsStacked;
+            }
+
+            set
+            {
+                if (value == _layoutIsStacked)
+                {
+                    return;
+                }
+
+                _layoutIsStacked = value;
+                OnPropertyChanged();
+            }
+        }
+
         private bool _alternatePageRotation = true;
         public bool AlternatePageRotation
         {

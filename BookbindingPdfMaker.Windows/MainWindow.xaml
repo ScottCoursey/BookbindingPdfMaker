@@ -7,7 +7,7 @@
         xmlns:models="clr-namespace:BookbindingPdfMaker.Models"
         xmlns:converters="clr-namespace:BookbindingPdfMaker.Converters"
         mc:Ignorable="d"
-        Title="Bookbinding PDF Maker" Height="425" Width="900"
+        Title="Bookbinding PDF Maker" Height="475" Width="900"
         ResizeMode="CanMinimize">
 
     <Window.DataContext>
@@ -47,6 +47,7 @@
             <converters:BoolToSignatureFormatConverter x:Key="BoolToSignatureFormatConverter"/>
             <converters:BoolToPageUnitConverter x:Key="BoolToPageUnitConverter"/>
             <converters:BoolToSourcePageAlignmentConverter x:Key="BoolToSourcePageAlignmentConverter"/>
+            <converters:BoolInverterConverter x:Key="BoolInverterConverter"/>
         </ResourceDictionary>
     </Window.Resources>
     <DockPanel>
@@ -73,7 +74,7 @@
                         <TextBlock Style="{StaticResource GroupTitle}">Input PDF Info</TextBlock>
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="80"/>
+                                <ColumnDefinition Width="90"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="25"/>
                             </Grid.ColumnDefinitions>
@@ -129,7 +130,9 @@
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
-                        <CheckBox IsChecked="{Binding AlternatePageRotation, Mode=TwoWay}">Alternate Page Rotation</CheckBox>
+                        <RadioButton IsChecked="{Binding LayoutIsStacked, Mode=TwoWay, Converter={StaticResource BoolInverterConverter}}">Do Not Stack Layout</RadioButton>
+                        <CheckBox IsChecked="{Binding AlternatePageRotation, Mode=TwoWay}" IsEnabled="{Binding LayoutIsStacked, Converter={StaticResource BoolInverterConverter}}" Margin="20, 0, 0, 0">Alternate Page Rotation</CheckBox>
+                        <RadioButton IsChecked="{Binding LayoutIsStacked, Mode=TwoWay}">Layout Is Stacked</RadioButton>
                     </StackPanel>
                 </Border>
             </StackPanel>
@@ -177,9 +180,9 @@
                         <CheckBox x:Name="FlyleafCheckbox" Click="FlyleafCheckbox_Click" IsChecked="{Binding AddFlyleaf, Mode=TwoWay}" >Add Flyleaf</CheckBox>
                         <CheckBox IsChecked="{Binding OutputTestOverlay, Mode=TwoWay}">Output Test Overlay</CheckBox>
                         <TextBlock>Source Page Alignment:</TextBlock>
-                        <RadioButton Margin="8, 4, 0, 4" IsChecked="{Binding SourcePageAlignment, Converter={StaticResource BoolToSourcePageAlignmentConverter}, ConverterParameter=Centered}">Centered</RadioButton>
+                        <RadioButton Margin="20, 4, 0, 4" IsChecked="{Binding SourcePageAlignment, Converter={StaticResource BoolToSourcePageAlignmentConverter}, ConverterParameter=Centered}">Centered</RadioButton>
                         <StackPanel Orientation="Horizontal">
-                            <RadioButton Margin="8, 0, 0, 0" IsChecked="{Binding SourcePageAlignment, Converter={StaticResource BoolToSourcePageAlignmentConverter}, ConverterParameter=OffsetFromSpine}">Offset From Spine:</RadioButton>
+                            <RadioButton Margin="20, 0, 0, 0" IsChecked="{Binding SourcePageAlignment, Converter={StaticResource BoolToSourcePageAlignmentConverter}, ConverterParameter=OffsetFromSpine}">Offset From Spine:</RadioButton>
                             <TextBox PreviewTextInput="TextInputOnlyAllowNumeric" Text="{Binding OffsetFromSpine, Mode=TwoWay}" IsEnabled="{Binding IsOffsetFromSpine}" Margin="4, 0, 0, 0" Width="50"></TextBox>
                         </StackPanel>
                     </StackPanel>
