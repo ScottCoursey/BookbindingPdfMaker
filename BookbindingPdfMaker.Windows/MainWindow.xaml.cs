@@ -111,8 +111,26 @@ namespace BookbindingPdfMaker
 
             var signatureInfo = _pdfMaker.ReadSignatureInfo(_mwvm.InputFilePath);
             _mwvm.TotalPages = signatureInfo.FullPageCount;
-            _mwvm.TotalSheets = signatureInfo.SignatureSizeList.Sum(size => size);
-            _mwvm.NumberOfSignatures = signatureInfo.SignatureSizeList.Count();
+
+            if (_mwvm.LayoutIsStacked)
+            {
+                var numSheets = 0;
+                for (int signatureSet = 0; signatureSet < signatureInfo.SignatureSizeList.Count(); signatureSet += 2)
+                {
+                    var signatureSize1 = signatureInfo.SignatureSizeList[signatureSet];
+                    var signatureSize2 = signatureInfo.SignatureSizeList[signatureSet + 1];
+                    var signatureSetSize = Math.Max(signatureSize1, signatureSize2);
+                    numSheets += signatureSetSize;
+                }
+
+                _mwvm.TotalSheets = numSheets;
+            }
+            else
+            {
+                _mwvm.TotalSheets = signatureInfo.SignatureSizeList.Sum(size => size);
+            }
+
+            _mwvm.NumberOfSignatures = signatureInfo.SignatureSizeList.Where(sig => sig > 0).Count();
             _mwvm.NumberOfPages = _pdfMaker.PdfInputForm.PageCount.ToString();
         }
 
@@ -251,6 +269,16 @@ namespace BookbindingPdfMaker
                 return;
             }
 
+            UpdateFileRelevantInfo();
+        }
+
+        private void DoNotStackLayoutButton_Click(object sender, RoutedEventArgs e)
+        {
+            UpdateFileRelevantInfo();
+        }
+
+        private void LayoutIsStackedButton_Click(object sender, RoutedEventArgs e)
+        {
             UpdateFileRelevantInfo();
         }
     }

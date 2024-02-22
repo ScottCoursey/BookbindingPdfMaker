@@ -2,6 +2,7 @@
 using PdfSharp;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
+using System.Diagnostics;
 using System.IO;
 
 namespace BookbindingPdfMaker.Services
@@ -55,48 +56,94 @@ namespace BookbindingPdfMaker.Services
 
                 var numberOfSignatures = signatureInfo.SignatureSizeList.Count();
                 var signaturePageStart = 1;
-                for (var signatureNumber = 0; signatureNumber < numberOfSignatures; signatureNumber++)
+                var signatureIncrement = _mwvm.LayoutIsStacked ? 2 : 1;
+                var signatureNumberForFile = 0;
+                for (var signatureNumber = 0; signatureNumber < numberOfSignatures; signatureNumber += signatureIncrement)
                 {
-                    var currentSignatureSize = signatureInfo.SignatureSizeList[signatureNumber];
+                    int currentSignatureSetSize = _mwvm.LayoutIsStacked
+                        ? Math.Max(signatureInfo.SignatureSizeList[signatureNumber], signatureInfo.SignatureSizeList[signatureNumber + 1])
+                        : signatureInfo.SignatureSizeList[signatureNumber];
+
                     using (_pdfOutputDoc = new PdfDocument())
                     {
-
-                        for (var signaturePageNumber = 0; signaturePageNumber < (currentSignatureSize * 2); signaturePageNumber++)
+                        var signaturePageNumberMax = currentSignatureSetSize * 2;
+                        for (var signaturePageNumber = 0; signaturePageNumber < signaturePageNumberMax; signaturePageNumber++)// signaturePageNumber += signatureIncrement)
                         {
                             var outputPage = AddPage();
 
-                            PageDirection direction = PageDirection.TopToRight;
-                            var highLocation = OutputLocation.Top;
-                            var lowLocation = OutputLocation.Bottom;
-
-                            var highPageNum = (signaturePageStart + (currentSignatureSize * 4)) - signaturePageNumber - 1;
-                            var lowPageNum = signaturePageStart + signaturePageNumber;
-
-                            if (lowPageNum % 2 == 0)
+                            if (!_mwvm.LayoutIsStacked)
                             {
-                                if (_mwvm.AlternatePageRotation)
+                                var direction = PageDirection.TopToRight;
+                                var highLocation = OutputLocation.Top;
+                                var lowLocation = OutputLocation.Bottom;
+
+                                var highPageNum = (signaturePageStart + (currentSignatureSetSize * 4)) - signaturePageNumber - 1;
+                                var lowPageNum = signaturePageStart + signaturePageNumber;
+
+                                if (lowPageNum % 2 == 0)
                                 {
-                                    direction = PageDirection.TopToLeft;
+                                    if (_mwvm.AlternatePageRotation)
+                                    {
+                                        direction = PageDirection.TopToLeft;
+                                    }
                                 }
+                                else
+                                {
+                                    if (!_mwvm.AlternatePageRotation)
+                                    {
+                                        highLocation = OutputLocation.Bottom;
+                                        lowLocation = OutputLocation.Top;
+                                    }
+                                }
+
+                                ApplyPage(outputPage, highPageNum, highLocation, direction);
+                                ApplyPage(outputPage, lowPageNum, lowLocation, direction);
                             }
                             else
                             {
-                                if (!_mwvm.AlternatePageRotation)
-                                {
-                                    highLocation = OutputLocation.Bottom;
-                                    lowLocation = OutputLocation.Top;
-                                }
-                            }
+                                var signatureFrontMin = signaturePageStart;
+                                var signatureFrontMax = signatureFrontMin + (signatureInfo.SignatureSizeList[signatureNumber] * 4) - 1;
 
-                            ApplyPage(outputPage, highPageNum, highLocation, direction);
-                            ApplyPage(outputPage, lowPageNum, lowLocation, direction);
+                                var signatureBackMin = signatureFrontMax + 1;
+                                var signatureBackMax = signatureBackMin + (signatureInfo.SignatureSizeList[signatureNumber + 1] * 4) - 1;
+
+                                int outputPageA;
+                                int outputPageB;
+                                int outputPageC;
+                                int outputPageD;
+
+                                var outputPageNumber = signaturePageStart + signaturePageNumber;
+
+                                if (signaturePageNumber % 2 == 0)
+                                {
+                                    outputPageA = signaturePageStart - 1 + ((signatureFrontMax - signatureFrontMin) / 2) + signatureFrontMin - ((outputPageNumber / 2) * 2);
+                                    outputPageB = signaturePageStart - 1 + ((signatureFrontMax - signatureFrontMin) / 2) + signatureFrontMin + ((outputPageNumber / 2) * 2) + 1;
+                                    outputPageC = signaturePageStart - 1 + ((signatureBackMax - signatureBackMin) / 2) + signatureBackMin - ((outputPageNumber / 2) * 2);
+                                    outputPageD = signaturePageStart - 1 + ((signatureBackMax - signatureBackMin) / 2) + signatureBackMin + ((outputPageNumber / 2) * 2) + 1;
+                                }
+                                else
+                                {
+                                    outputPageA = signaturePageStart - 1 + ((signatureFrontMax - signatureFrontMin) / 2) + signatureFrontMin + (((outputPageNumber / 2) - 1) * 2) + 2;
+                                    outputPageB = signaturePageStart - 1 + ((signatureFrontMax - signatureFrontMin) / 2) + signatureFrontMin - (((outputPageNumber / 2) - 1) * 2) - 1;
+                                    outputPageC = signaturePageStart - 1 + ((signatureBackMax - signatureBackMin) / 2) + signatureBackMin + (((outputPageNumber / 2) - 1) * 2) + 2;
+                                    outputPageD = signaturePageStart - 1 + ((signatureBackMax - signatureBackMin) / 2) + signatureBackMin - (((outputPageNumber / 2) - 1) * 2) - 1;
+                                }
+
+                                Trace.WriteLine($"{outputPageA} {outputPageB} {outputPageC} {outputPageD}");
+
+                                ApplyPage(outputPage, outputPageA, OutputLocation.TopLeft, PageDirection.TopToTop);
+                                ApplyPage(outputPage, outputPageB, OutputLocation.TopRight, PageDirection.TopToTop);
+                                ApplyPage(outputPage, outputPageC, OutputLocation.BottomLeft, PageDirection.TopToTop);
+                                ApplyPage(outputPage, outputPageD, OutputLocation.BottomRight, PageDirection.TopToTop);
+                            }
                         }
 
-                        _pdfOutputDoc.Save(Path.Combine(_outputSignatureFolder, $"Signature{signatureNumber + 1}.pdf"));
+                        _pdfOutputDoc.Save(Path.Combine(_outputSignatureFolder, $"Signature{signatureNumberForFile + 1}.pdf"));
+                        signatureNumberForFile++;
                         _pdfOutputDoc.Close();
                     }
 
-                    signaturePageStart += currentSignatureSize * 4;
+                    signaturePageStart += currentSignatureSetSize * (_mwvm.LayoutIsStacked ? 8 : 4);
                 }
             }
         }
@@ -154,15 +201,13 @@ namespace BookbindingPdfMaker.Services
 
         private SignatureInfo GetSignatureInfo()
         {
-            var inputPagesPerOutputPage = _mwvm.LayoutIsStacked ? 8 : 4;
-
             var result = new SignatureInfo();
-            var pageCount = PdfInputForm!.PageCount + (_mwvm.AddFlyleaf ? inputPagesPerOutputPage : 0);
+            var pageCount = PdfInputForm!.PageCount + (_mwvm.AddFlyleaf ? 4 : 0);
 
             switch (_mwvm.FormatOfSignature)
             {
                 case SignatureFormat.Booklet:
-                    _defaultSignatureSize = (pageCount / inputPagesPerOutputPage) + (pageCount % inputPagesPerOutputPage > 0 ? 1 : 0);
+                    _defaultSignatureSize = (pageCount / 4) + (pageCount % 4 > 0 ? 1 : 0);
                     break;
 
                 case SignatureFormat.PerfectBound:
@@ -176,20 +221,20 @@ namespace BookbindingPdfMaker.Services
                 case SignatureFormat.CustomSignatures:
                     var split = _mwvm.CustomSignatures.Split(" ");
                     result.SignatureSizeList = split.Select(str => { int.TryParse(str, out var val); return val; }).ToList();
-                    result.FullPageCount = result.SignatureSizeList.Sum(pc => pc) * inputPagesPerOutputPage;
+                    result.FullPageCount = result.SignatureSizeList.Sum(pc => pc) * 4;
                     return result;
             }
 
-            var numberOfFullSignatures = pageCount / (_defaultSignatureSize * inputPagesPerOutputPage);
-            var pagesInPartialSignature = pageCount % (_defaultSignatureSize * inputPagesPerOutputPage);
+            var numberOfFullSignatures = pageCount / (_defaultSignatureSize * 4);
+            var pagesInPartialSignature = pageCount % (_defaultSignatureSize * 4);
 
             List<int> signatureSizeList = Enumerable.Repeat(_defaultSignatureSize, numberOfFullSignatures).ToList();
             if (pagesInPartialSignature > 0)
             {
-                var extraPageCount = (pagesInPartialSignature / inputPagesPerOutputPage) + (pagesInPartialSignature % inputPagesPerOutputPage > 0 ? 1 : 0);
+                var extraPageCount = (pagesInPartialSignature / 4) + (pagesInPartialSignature % 4 > 0 ? 1 : 0);
                 signatureSizeList.Add(extraPageCount);
             }
-            result.FullPageCount = pageCount + (pagesInPartialSignature % inputPagesPerOutputPage > 0 ? 1 : 0);
+            result.FullPageCount = pageCount + (pagesInPartialSignature % 4 > 0 ? 1 : 0);
 
             var lastUpdated = -1;
 
@@ -207,6 +252,11 @@ namespace BookbindingPdfMaker.Services
                     signatureSizeList[lastUpdated]--;
                     signatureSizeList[lastIndex]++;
                 }
+            }
+
+            if (_mwvm.LayoutIsStacked && signatureSizeList.Count() % 2 == 1)
+            {
+                signatureSizeList.Add(0);
             }
 
             result.SignatureSizeList = signatureSizeList;
@@ -282,52 +332,131 @@ namespace BookbindingPdfMaker.Services
                     });
                 }
 
+                double rotation = 0;
+                double top = 0;
+                double left = 0;
+
                 if (_mwvm.SourcePageAlignment == SourcePageAlignment.Centered)
                 {
-                    if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToRight)
+                    if (pageDirection == PageDirection.TopToTop)
                     {
-                        gfx.RotateAtTransform(90, new XPoint(0, 0));
-                        box = new XRect((paperHeight / 4) - (width / 2), -(paperWidth / 2) - (height / 2), width, height);
-                    }
-                    else if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToLeft)
-                    {
-                        gfx.RotateAtTransform(-90, new XPoint(0, 0));
-                        box = new XRect(-(paperHeight / 4) - (width / 2), (paperWidth / 2) - (height / 2), width, height);
-                    }
-                    else if (outputLocation == OutputLocation.Bottom && pageDirection == PageDirection.TopToRight)
-                    {
-                        gfx.RotateAtTransform(90, new XPoint(0, 0));
-                        box = new XRect((paperHeight * 3 / 4) - (width / 2), -(paperWidth / 2) - (height / 2), width, height);
+                        rotation = 0;
+
+                        switch (outputLocation)
+                        {
+                            case OutputLocation.TopLeft:
+                                left = 0;
+                                top = 0;
+                                break;
+
+                            case OutputLocation.TopRight:
+                                left = paperWidth / 2;
+                                top = 0;
+                                break;
+
+                            case OutputLocation.BottomLeft:
+                                left = 0;
+                                top = paperHeight / 2;
+                                break;
+
+                            case OutputLocation.BottomRight:
+                                left = paperWidth / 2;
+                                top = paperHeight / 2;
+                                break;
+                        }
                     }
                     else
                     {
-                        gfx.RotateAtTransform(-90, new XPoint(0, 0));
-                        box = new XRect(-(paperHeight * 3 / 4) - (width / 2), (paperWidth / 2) - (height / 2), width, height);
+                        if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToRight)
+                        {
+                            rotation = 90;
+                            left = (paperHeight / 4) - (width / 2);
+                            top = -(paperWidth / 2) - (height / 2);
+                        }
+                        else if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToLeft)
+                        {
+                            rotation = -90;
+                            left = -(paperHeight / 4) - (width / 2);
+                            top = (paperWidth / 2) - (height / 2);
+                        }
+                        else if (outputLocation == OutputLocation.Bottom && pageDirection == PageDirection.TopToRight)
+                        {
+                            rotation = 90;
+                            left = (paperHeight * 3 / 4) - (width / 2);
+                            top = -(paperWidth / 2) - (height / 2);
+                        }
+                        else
+                        {
+                            rotation = -90;
+                            left = -(paperHeight * 3 / 4) - (width / 2);
+                            top = (paperWidth / 2) - (height / 2);
+                        }
                     }
                 }
                 else
                 {
-                    if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToRight)
+                    if (pageDirection == PageDirection.TopToTop)
                     {
-                        gfx.RotateAtTransform(90, new XPoint(0, 0));
-                        box = new XRect((paperHeight / 2) - width - offsetFromSpineAmount, -(paperWidth / 2) - (height / 2), width, height);
-                    }
-                    else if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToLeft)
-                    {
-                        gfx.RotateAtTransform(-90, new XPoint(0, 0));
-                        box = new XRect(-(paperHeight / 2) + offsetFromSpineAmount, (paperWidth / 2) - (height / 2), width, height);
-                    }
-                    else if (outputLocation == OutputLocation.Bottom && pageDirection == PageDirection.TopToRight)
-                    {
-                        gfx.RotateAtTransform(90, new XPoint(0, 0));
-                        box = new XRect((paperHeight / 2) + offsetFromSpineAmount, -(paperWidth / 2) - (height / 2), width, height);
+                        rotation = 0;
+
+                        switch (outputLocation)
+                        {
+                            case OutputLocation.TopLeft:
+                                left = 0;
+                                top = 0;
+                                break;
+
+                            case OutputLocation.TopRight:
+                                left = paperWidth / 2;
+                                top = 0;
+                                break;
+
+                            case OutputLocation.BottomLeft:
+                                left = 0;
+                                top = paperHeight / 2;
+                                break;
+
+                            case OutputLocation.BottomRight:
+                                left = paperWidth / 2;
+                                top = paperHeight / 2;
+                                break;
+                        }
                     }
                     else
                     {
-                        gfx.RotateAtTransform(-90, new XPoint(0, 0));
-                        box = new XRect(-(paperHeight / 2) - width - offsetFromSpineAmount, (paperWidth / 2) - (height / 2), width, height);
+                        if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToRight)
+                        {
+                            rotation = 90;
+                            left = (paperHeight / 2) - width - offsetFromSpineAmount;
+                            top = -(paperWidth / 2) - (height / 2);
+                        }
+                        else if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToLeft)
+                        {
+                            rotation = -90;
+                            left = -(paperHeight / 2) + offsetFromSpineAmount;
+                            top = (paperWidth / 2) - (height / 2);
+                        }
+                        else if (outputLocation == OutputLocation.Bottom && pageDirection == PageDirection.TopToRight)
+                        {
+                            rotation = 90;
+                            left = (paperHeight / 2) + offsetFromSpineAmount;
+                            top = -(paperWidth / 2) - (height / 2);
+                        }
+                        else
+                        {
+                            rotation = -90;
+                            left = -(paperHeight / 2) - width - offsetFromSpineAmount;
+                            top = (paperWidth / 2) - (height / 2);
+                        }
                     }
                 }
+
+                if (rotation != 0)
+                {
+                    gfx.RotateAtTransform(rotation, new XPoint(0, 0));
+                }
+
+                box = new XRect(left, top, width, height);
 
                 if (outputPageImage)
                 {

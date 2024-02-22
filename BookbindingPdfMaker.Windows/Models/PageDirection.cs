@@ -3,6 +3,7 @@
     internal enum PageDirection
     {
         TopToRight,
-        TopToLeft
+        TopToLeft,
+        TopToTop
     }
 }

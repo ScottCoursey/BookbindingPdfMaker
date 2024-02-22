@@ -130,9 +130,9 @@
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
-                        <RadioButton IsChecked="{Binding LayoutIsStacked, Mode=TwoWay, Converter={StaticResource BoolInverterConverter}}">Do Not Stack Layout</RadioButton>
+                        <RadioButton x:Name="DoNotStackLayoutButton" Click="DoNotStackLayoutButton_Click" IsChecked="{Binding LayoutIsStacked, Mode=TwoWay, Converter={StaticResource BoolInverterConverter}}">Do Not Stack Layout</RadioButton>
                         <CheckBox IsChecked="{Binding AlternatePageRotation, Mode=TwoWay}" IsEnabled="{Binding LayoutIsStacked, Converter={StaticResource BoolInverterConverter}}" Margin="20, 0, 0, 0">Alternate Page Rotation</CheckBox>
-                        <RadioButton IsChecked="{Binding LayoutIsStacked, Mode=TwoWay}">Layout Is Stacked</RadioButton>
+                        <RadioButton x:Name="LayoutIsStackedButton" Click="LayoutIsStackedButton_Click" IsChecked="{Binding LayoutIsStacked, Mode=TwoWay}">Layout Is Stacked</RadioButton>
                     </StackPanel>
                 </Border>
             </StackPanel>

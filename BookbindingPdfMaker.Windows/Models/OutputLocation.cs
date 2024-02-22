@@ -3,6 +3,10 @@
     internal enum OutputLocation
     {
         Top,
-        Bottom
+        Bottom,
+        TopLeft,
+        TopRight,
+        BottomLeft,
+        BottomRight
     }
 }
