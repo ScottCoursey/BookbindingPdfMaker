@@ -30,16 +30,16 @@ namespace BookbindingPdfMaker.Services
                 }
 
                 var upperPageRangeStart = firstPageNum;
-                var upperPageRangeEnd = firstPageNum + upperSignatureSize * 4 - 1;
+                var upperPageRangeEnd = firstPageNum + (upperSignatureSize * 4) - 1;
                 var lowerPageRangeStart = upperPageRangeEnd + 1;
-                var lowerPageRangeEnd = lowerPageRangeStart + lowerSignatureSize * 4 - 1;
+                var lowerPageRangeEnd = lowerPageRangeStart + (lowerSignatureSize * 4) - 1;
 
-                var pageNumFrontTopLeft = upperPageRangeStart + (upperPageRangeEnd - upperPageRangeStart) / 2;
+                var pageNumFrontTopLeft = upperPageRangeStart + ((upperPageRangeEnd - upperPageRangeStart) / 2);
                 var pageNumFrontTopRight = pageNumFrontTopLeft + 1;
                 var pageNumBackTopLeft = pageNumFrontTopLeft + 2;
                 var pageNumBackTopRight = pageNumFrontTopLeft - 1;
 
-                var pageNumFrontBottomLeft = lowerPageRangeStart + (lowerPageRangeEnd - lowerPageRangeStart) / 2;
+                var pageNumFrontBottomLeft = lowerPageRangeStart + ((lowerPageRangeEnd - lowerPageRangeStart) / 2);
                 var pageNumFrontBottomRight = pageNumFrontBottomLeft + 1;
                 var pageNumBackBottomLeft = pageNumFrontBottomLeft + 2;
                 var pageNumBackBottomRight = pageNumFrontBottomLeft - 1;
