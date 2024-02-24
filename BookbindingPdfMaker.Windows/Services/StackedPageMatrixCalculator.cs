@@ -11,7 +11,7 @@ namespace BookbindingPdfMaker.Services
 
             var pages = new List<PageMatrixData>();
 
-            for (var signatureSetStart = 0; signatureSetStart <= signatureList.Count() / 2; signatureSetStart += 2)
+            for (var signatureSetStart = 0; signatureSetStart < signatureList.Count(); signatureSetStart += 2)
             {
                 var upperSignatureSize = signatureList.ElementAt(signatureSetStart);
                 var lowerSignatureSize = signatureList.ElementAt(signatureSetStart + 1);

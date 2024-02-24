@@ -48,106 +48,99 @@ namespace BookbindingPdfMaker.Services
 
         public void Generate(string inputPdfPath, string outputSignatureFolder)
         {
-            _outputSignatureFolder = outputSignatureFolder;
-
-            CalculateBookSize();
-
-            using (PdfInputForm = XPdfForm.FromFile(inputPdfPath))
+            try
             {
-                var signatureInfo = GetSignatureInfo();
-                int.TryParse(_mwvm.NumberOfPages, out var numberOfPages);
-                var pageMatrix = _stackedPageMatrixCalculator.GetMatrix(signatureInfo.SignatureSizeList, numberOfPages);
-                var numberOfSignatures = signatureInfo.SignatureSizeList.Count();
-                var signaturePageStart = 1;
-                var signatureIncrement = _mwvm.LayoutIsStacked ? 2 : 1;
-                var signatureNumberForFile = 0;
-                for (var signatureNumber = 0; signatureNumber < numberOfSignatures; signatureNumber += signatureIncrement)
+                _outputSignatureFolder = outputSignatureFolder;
+
+                CalculateBookSize();
+
+                using (PdfInputForm = XPdfForm.FromFile(inputPdfPath))
                 {
-                    int currentSignatureSetSize = _mwvm.LayoutIsStacked
-                        ? Math.Max(signatureInfo.SignatureSizeList[signatureNumber], signatureInfo.SignatureSizeList[signatureNumber + 1])
-                        : signatureInfo.SignatureSizeList[signatureNumber];
-
-                    using (_pdfOutputDoc = new PdfDocument())
+                    var signatureInfo = GetSignatureInfo();
+                    int.TryParse(_mwvm.NumberOfPages, out var numberOfPages);
+                    var pageMatrixCollection = _stackedPageMatrixCalculator.GetMatrix(signatureInfo.SignatureSizeList, numberOfPages);
+                    var numberOfSignatures = signatureInfo.SignatureSizeList.Count();
+                    var signaturePageStart = 1;
+                    var signatureSheetStart = 1;
+                    var signatureIncrement = _mwvm.LayoutIsStacked ? 2 : 1;
+                    var signatureNumberForFile = 0;
+                    for (var signatureNumber = 0; signatureNumber < numberOfSignatures; signatureNumber += signatureIncrement)
                     {
-                        var signaturePageNumberMax = currentSignatureSetSize * 2;
-                        for (var signaturePageNumber = 0; signaturePageNumber < signaturePageNumberMax; signaturePageNumber++)
+                        int currentSignatureSetSize = _mwvm.LayoutIsStacked
+                            ? Math.Max(signatureInfo.SignatureSizeList[signatureNumber], signatureInfo.SignatureSizeList[signatureNumber + 1])
+                            : signatureInfo.SignatureSizeList[signatureNumber];
+
+                        using (_pdfOutputDoc = new PdfDocument())
                         {
-                            var outputPage = AddPage();
-
-                            if (!_mwvm.LayoutIsStacked)
+                            var signaturePageNumberMax = currentSignatureSetSize * 2;
+                            for (var signaturePageNumber = 0; signaturePageNumber < signaturePageNumberMax; signaturePageNumber++)
                             {
-                                var direction = PageDirection.TopToRight;
-                                var highLocation = OutputLocation.Top;
-                                var lowLocation = OutputLocation.Bottom;
+                                var outputPage = AddPage();
 
-                                var highPageNum = (signaturePageStart + (currentSignatureSetSize * 4)) - signaturePageNumber - 1;
-                                var lowPageNum = signaturePageStart + signaturePageNumber;
-
-                                if (lowPageNum % 2 == 0)
+                                if (!_mwvm.LayoutIsStacked)
                                 {
-                                    if (_mwvm.AlternatePageRotation)
+                                    var direction = PageDirection.TopToRight;
+                                    var highLocation = OutputLocation.Top;
+                                    var lowLocation = OutputLocation.Bottom;
+
+                                    var highPageNum = (signaturePageStart + (currentSignatureSetSize * 4)) - signaturePageNumber - 1;
+                                    var lowPageNum = signaturePageStart + signaturePageNumber;
+
+                                    if (lowPageNum % 2 == 0)
                                     {
-                                        direction = PageDirection.TopToLeft;
+                                        if (_mwvm.AlternatePageRotation)
+                                        {
+                                            direction = PageDirection.TopToLeft;
+                                        }
                                     }
+                                    else
+                                    {
+                                        if (!_mwvm.AlternatePageRotation)
+                                        {
+                                            highLocation = OutputLocation.Bottom;
+                                            lowLocation = OutputLocation.Top;
+                                        }
+                                    }
+
+                                    ApplyPage(outputPage, highPageNum, highLocation, direction);
+                                    ApplyPage(outputPage, lowPageNum, lowLocation, direction);
                                 }
                                 else
                                 {
-                                    if (!_mwvm.AlternatePageRotation)
+                                    var outputSignaturePageNumber = signaturePageNumberMax - signaturePageNumber;
+                                    var outputSheetNumber = signatureSheetStart + ((outputSignaturePageNumber + 1) / 2) - 1;
+                                    var pageMatrix = pageMatrixCollection.FirstOrDefault(pm =>
+                                        pm.SheetNum == outputSheetNumber &&
+                                        pm.FrontOrBack == (
+                                            signaturePageNumber % 2 == 0
+                                                ? PageFrontOrBack.Front
+                                                : PageFrontOrBack.Back
+                                        )
+                                    );
+
+                                    if (pageMatrix != null)
                                     {
-                                        highLocation = OutputLocation.Bottom;
-                                        lowLocation = OutputLocation.Top;
+                                        ApplyPage(outputPage, pageMatrix.PageNumTopLeft, OutputLocation.TopLeft, PageDirection.TopToTop);
+                                        ApplyPage(outputPage, pageMatrix.PageNumTopRight, OutputLocation.TopRight, PageDirection.TopToTop);
+                                        ApplyPage(outputPage, pageMatrix.PageNumBottomLeft, OutputLocation.BottomLeft, PageDirection.TopToTop);
+                                        ApplyPage(outputPage, pageMatrix.PageNumBottomRight, OutputLocation.BottomRight, PageDirection.TopToTop);
                                     }
                                 }
-
-                                ApplyPage(outputPage, highPageNum, highLocation, direction);
-                                ApplyPage(outputPage, lowPageNum, lowLocation, direction);
                             }
-                            else
-                            {
-                                var signatureFrontMin = signaturePageStart;
-                                var signatureFrontMax = signatureFrontMin + (signatureInfo.SignatureSizeList[signatureNumber] * 4) - 1;
 
-                                var signatureBackMin = signatureFrontMax + 1;
-                                var signatureBackMax = signatureBackMin + (signatureInfo.SignatureSizeList[signatureNumber + 1] * 4) - 1;
-
-                                int outputPageA;
-                                int outputPageB;
-                                int outputPageC;
-                                int outputPageD;
-
-                                var outputPageNumber = signaturePageStart + signaturePageNumber;
-
-                                if (signaturePageNumber % 2 == 0)
-                                {
-                                    outputPageA = signaturePageStart - 1 + ((signatureFrontMax - signatureFrontMin) / 2) + signatureFrontMin - outputPageNumber;
-                                    outputPageB = signaturePageStart - 1 + ((signatureFrontMax - signatureFrontMin) / 2) + signatureFrontMin + outputPageNumber + 1;
-                                    outputPageC = signaturePageStart - 1 + ((signatureBackMax - signatureBackMin) / 2) + signatureBackMin - outputPageNumber;
-                                    outputPageD = signaturePageStart - 1 + ((signatureBackMax - signatureBackMin) / 2) + signatureBackMin + outputPageNumber + 1;
-                                }
-                                else
-                                {
-                                    outputPageA = signaturePageStart - 1 + ((signatureFrontMax - signatureFrontMin) / 2) + signatureFrontMin + (((outputPageNumber / 2) - 1) * 2) + 2;
-                                    outputPageB = signaturePageStart - 1 + ((signatureFrontMax - signatureFrontMin) / 2) + signatureFrontMin - (((outputPageNumber / 2) - 1) * 2) - 1;
-                                    outputPageC = signaturePageStart - 1 + ((signatureBackMax - signatureBackMin) / 2) + signatureBackMin + (((outputPageNumber / 2) - 1) * 2) + 2;
-                                    outputPageD = signaturePageStart - 1 + ((signatureBackMax - signatureBackMin) / 2) + signatureBackMin - (((outputPageNumber / 2) - 1) * 2) - 1;
-                                }
-
-                                Trace.WriteLine($"{outputPageA} {outputPageB} {outputPageC} {outputPageD}");
-
-                                ApplyPage(outputPage, outputPageA, OutputLocation.TopLeft, PageDirection.TopToTop);
-                                ApplyPage(outputPage, outputPageB, OutputLocation.TopRight, PageDirection.TopToTop);
-                                ApplyPage(outputPage, outputPageC, OutputLocation.BottomLeft, PageDirection.TopToTop);
-                                ApplyPage(outputPage, outputPageD, OutputLocation.BottomRight, PageDirection.TopToTop);
-                            }
+                            _pdfOutputDoc.Save(Path.Combine(_outputSignatureFolder, $"Signature{signatureNumberForFile + 1}.pdf"));
+                            signatureNumberForFile++;
+                            _pdfOutputDoc.Close();
                         }
 
-                        _pdfOutputDoc.Save(Path.Combine(_outputSignatureFolder, $"Signature{signatureNumberForFile + 1}.pdf"));
-                        signatureNumberForFile++;
-                        _pdfOutputDoc.Close();
+                        signaturePageStart += currentSignatureSetSize * (_mwvm.LayoutIsStacked ? 8 : 4);
+                        signatureSheetStart += currentSignatureSetSize;
                     }
-
-                    signaturePageStart += currentSignatureSetSize * (_mwvm.LayoutIsStacked ? 8 : 4);
                 }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex.Message);
             }
         }
 
@@ -302,11 +295,17 @@ namespace BookbindingPdfMaker.Services
                 }
             }
 
+            var paperWidth = outputPage.Width;
+            var paperHeight = outputPage.Height;
+            var width = _outputBookWidth;
+            var height = _outputBookHeight;
+
             using (var gfx = XGraphics.FromPdfPage(outputPage))
             {
-                PdfInputForm.PageNumber = inputPageNum;
-                var width = _outputBookWidth;
-                var height = _outputBookHeight;
+                if (inputPageNum > 0)
+                {
+                    PdfInputForm.PageNumber = inputPageNum;
+                }
 
                 if (_mwvm.SelectedScaleOfPage!.ScaleOfPage != PageScaling.Stretch)
                 {
@@ -320,9 +319,6 @@ namespace BookbindingPdfMaker.Services
                         width = height * aspectRatio;
                     }
                 }
-
-                var paperWidth = outputPage.Width;
-                var paperHeight = outputPage.Height;
 
                 XRect box;
 
@@ -448,9 +444,26 @@ namespace BookbindingPdfMaker.Services
 
                 box = new XRect(left, top, width, height);
 
-                if (outputPageImage)
+                if (inputPageNum == -1)
                 {
-                    gfx.DrawImage(PdfInputForm, box);
+                    gfx.DrawLines(XPens.Black,
+                    [
+                        new XPoint(box.Left, box.Top),
+                        new XPoint(box.Left + box.Width, box.Top + box.Height)
+                    ]);
+
+                    gfx.DrawLines(XPens.Black,
+                    [
+                        new XPoint(box.Left + box.Width, box.Top),
+                        new XPoint(box.Left, box.Top + box.Height)
+                    ]);
+                }
+                else
+                {
+                    if (outputPageImage)
+                    {
+                        gfx.DrawImage(PdfInputForm, box);
+                    }
                 }
 
                 if (_mwvm.OutputTestOverlay)

@@ -4,10 +4,10 @@
     {
         public int SheetNum { get; set; }
         public PageFrontOrBack FrontOrBack { get; set; }
-        public int PageNumTopLeft { get; set; }
-        public int PageNumTopRight { get; set; }
-        public int PageNumBottomLeft { get; set; }
-        public int PageNumBottomRight { get; set; }
+        public int PageNumTopLeft { get; set; } = -1;
+        public int PageNumTopRight { get; set; } = -1;
+        public int PageNumBottomLeft { get; set; } = -1;
+        public int PageNumBottomRight { get; set; } = -1;
 
         public void ClearPageNumIfOver(int maxValue)
         {
