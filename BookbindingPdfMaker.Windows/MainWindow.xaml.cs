@@ -16,7 +16,7 @@ namespace BookbindingPdfMaker
         {
             InitializeComponent();
             _mwvm = new MainWindowViewModel();
-            _pdfMaker = new PdfMaker(_mwvm);
+            _pdfMaker = new PdfMaker(_mwvm, new StackedPageMatrixCalculator());
 
             _mwvm.PaperSizes = LoadPapers();
             _mwvm.SelectedPaperSize = _mwvm.PaperSizes.First(paper => paper.Name!.ToUpper() == "LETTER");

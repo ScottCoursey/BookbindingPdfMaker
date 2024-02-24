@@ -9,7 +9,8 @@ namespace BookbindingPdfMaker.Services
 {
     internal class PdfMaker : IPdfMaker
     {
-        private MainWindowViewModel _mwvm;
+        private readonly MainWindowViewModel _mwvm;
+        private readonly IStackedPageMatrixCalculator _stackedPageMatrixCalculator;
         private PdfDocument? _pdfOutputDoc;
         public XPdfForm? PdfInputForm { get; private set; }
         private string? _outputSignatureFolder;
@@ -17,9 +18,10 @@ namespace BookbindingPdfMaker.Services
         private double _outputBookWidth;
         private double _outputBookHeight;
 
-        public PdfMaker(MainWindowViewModel mwvm)
+        public PdfMaker(MainWindowViewModel mwvm, IStackedPageMatrixCalculator stackedPageMatrixCalculator)
         {
             _mwvm = mwvm;
+            _stackedPageMatrixCalculator = stackedPageMatrixCalculator;
         }
 
         public void SetInputFileName(string fileName)
@@ -53,7 +55,8 @@ namespace BookbindingPdfMaker.Services
             using (PdfInputForm = XPdfForm.FromFile(inputPdfPath))
             {
                 var signatureInfo = GetSignatureInfo();
-
+                int.TryParse(_mwvm.NumberOfPages, out var numberOfPages);
+                var pageMatrix = _stackedPageMatrixCalculator.GetMatrix(signatureInfo.SignatureSizeList, numberOfPages);
                 var numberOfSignatures = signatureInfo.SignatureSizeList.Count();
                 var signaturePageStart = 1;
                 var signatureIncrement = _mwvm.LayoutIsStacked ? 2 : 1;
@@ -116,10 +119,10 @@ namespace BookbindingPdfMaker.Services
 
                                 if (signaturePageNumber % 2 == 0)
                                 {
-                                    outputPageA = signaturePageStart - 1 + ((signatureFrontMax - signatureFrontMin) / 2) + signatureFrontMin - ((outputPageNumber / 2) * 2);
-                                    outputPageB = signaturePageStart - 1 + ((signatureFrontMax - signatureFrontMin) / 2) + signatureFrontMin + ((outputPageNumber / 2) * 2) + 1;
-                                    outputPageC = signaturePageStart - 1 + ((signatureBackMax - signatureBackMin) / 2) + signatureBackMin - ((outputPageNumber / 2) * 2);
-                                    outputPageD = signaturePageStart - 1 + ((signatureBackMax - signatureBackMin) / 2) + signatureBackMin + ((outputPageNumber / 2) * 2) + 1;
+                                    outputPageA = signaturePageStart - 1 + ((signatureFrontMax - signatureFrontMin) / 2) + signatureFrontMin - outputPageNumber;
+                                    outputPageB = signaturePageStart - 1 + ((signatureFrontMax - signatureFrontMin) / 2) + signatureFrontMin + outputPageNumber + 1;
+                                    outputPageC = signaturePageStart - 1 + ((signatureBackMax - signatureBackMin) / 2) + signatureBackMin - outputPageNumber;
+                                    outputPageD = signaturePageStart - 1 + ((signatureBackMax - signatureBackMin) / 2) + signatureBackMin + outputPageNumber + 1;
                                 }
                                 else
                                 {
@@ -331,8 +334,6 @@ namespace BookbindingPdfMaker.Services
                 {
                     if (pageDirection == PageDirection.TopToTop)
                     {
-                        rotation = 0;
-
                         switch (outputLocation)
                         {
                             case OutputLocation.TopLeft:
@@ -388,8 +389,6 @@ namespace BookbindingPdfMaker.Services
                 {
                     if (pageDirection == PageDirection.TopToTop)
                     {
-                        rotation = 0;
-
                         switch (outputLocation)
                         {
                             case OutputLocation.TopLeft:
@@ -456,7 +455,7 @@ namespace BookbindingPdfMaker.Services
 
                 if (_mwvm.OutputTestOverlay)
                 {
-                    gfx.DrawLines(XPens.LightPink,
+                    gfx.DrawLines(_mwvm.LayoutIsStacked ? XPens.Red : XPens.LightPink,
                     [
                         new XPoint(0, paperHeight / 2),
                         new XPoint(paperWidth, paperHeight / 2)
