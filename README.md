@@ -58,6 +58,10 @@ Here is an example of a single printed page with a stacked layout, custom book s
 
 ![image](https://github.com/ScottCoursey/BookbindingPdfMaker/assets/48330690/835dc57d-a424-4a05-b656-05d6a391b0ea)
 
+As the program calculates how many pages are in a signature, there may be times when a signature set at the top and bottom have different sizes.  If that is the case, the resulting section of the output will have an "X" printed across it, to let you know that portion of the page should be discarded.  For example:
+
+![image](https://github.com/ScottCoursey/BookbindingPdfMaker/assets/48330690/0ea6debc-fc73-4efd-8f9e-452a536877a0)
+
 ## Signature Format
 
 ![image](https://github.com/ScottCoursey/BookbindingPdfMaker/assets/48330690/a0eaf175-238c-4c61-82d2-82f790eea94b)
