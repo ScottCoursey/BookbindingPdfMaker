@@ -9,6 +9,6 @@ namespace BookbindingPdfMaker.Services
         void Generate(string inputPdfPath, string outputSignatureFolder);
         void SetInputFileName(string fileName);
         void SetOutputPath(string selectedPath);
-        SignatureInfo ReadSignatureInfo(string inputPdfPath);
+        SignatureInfo? ReadSignatureInfo(string inputPdfPath);
     }
 }

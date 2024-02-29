@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using Newtonsoft.Json;
+using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace BookbindingPdfMaker.Models
@@ -7,9 +9,69 @@ namespace BookbindingPdfMaker.Models
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        public string InputFilePath = "";
+        private string _inputFilePath = "";
+        public string InputFilePath
+        {
+            get
+            {
+                return _inputFilePath;
+            }
 
-        private string _fileName = "No File Selected";
+            set
+            {
+                if (value == _inputFilePath)
+                {
+                    return;
+                }
+
+                _inputFilePath = value;
+                FileName = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isDirty = false;
+
+        [JsonIgnore]
+        public bool IsDirty
+        {
+            get
+            {
+                return _isDirty;
+            }
+
+            set
+            {
+                if (value == _isDirty)
+                {
+                    return;
+                }
+
+                _isDirty = value;
+            }
+        }
+
+        private string _projectFilePath;
+        public string ProjectFilePath
+        {
+            get
+            {
+                return _projectFilePath;
+            }
+
+            set
+            {
+                if (value == _projectFilePath)
+                {
+                    return;
+                }
+
+                _projectFilePath = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _fileName = Constants.NoFileSelected;
         public string FileName
         {
             get
@@ -24,12 +86,12 @@ namespace BookbindingPdfMaker.Models
                     return;
                 }
 
-                _fileName = value;
+                _fileName = string.IsNullOrEmpty(value) ? Constants.NoFileSelected : Path.GetFileName(value);
                 OnPropertyChanged();
             }
         }
 
-        private string _pageSize = "N/A";
+        private string _pageSize = Constants.N_A;
         public string PageSize
         {
             get
@@ -49,7 +111,7 @@ namespace BookbindingPdfMaker.Models
             }
         }
 
-        private string _numberOfPages = "N/A";
+        private string _numberOfPages = Constants.N_A;
         public string NumberOfPages
         {
             get
@@ -69,7 +131,7 @@ namespace BookbindingPdfMaker.Models
             }
         }
 
-        private string _outputPath = "No Folder Selected";
+        private string _outputPath = Constants.NoFolderSelected;
         public string OutputPath
         {
             get
@@ -85,26 +147,6 @@ namespace BookbindingPdfMaker.Models
                 }
 
                 _outputPath = value;
-                OnPropertyChanged();
-            }
-        }
-
-        private string _inputPath = "";
-        public string InputPath
-        {
-            get
-            {
-                return _inputPath;
-            }
-
-            set
-            {
-                if (value == _inputPath)
-                {
-                    return;
-                }
-
-                _inputPath = value;
                 OnPropertyChanged();
             }
         }
@@ -470,18 +512,58 @@ namespace BookbindingPdfMaker.Models
             }
         }
 
+        [JsonIgnore]
         public IEnumerable<PageScale> ScaleOfPages { get; set; } = [];
+
         public PageScale? SelectedScaleOfPage { get; set; }
 
+        [JsonIgnore]
         public IEnumerable<PrinterType> PrinterTypes { get; set; } = [];
+
         public PrinterType? SelectedPrinterType { get; set; }
 
+        [JsonIgnore]
         public IEnumerable<PaperDefinition> PaperSizes { get; set; } = [];
+
         public PaperDefinition? SelectedPaperSize { get; set; }
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
         {
+            _isDirty = true;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+
+        public void ApplyModel(MainWindowViewModel mwvm)
+        {
+            SelectedPaperSize = mwvm.SelectedPaperSize;
+            SelectedPrinterType = mwvm.SelectedPrinterType;
+            SelectedScaleOfPage = mwvm.SelectedScaleOfPage;
+            NumberOfSignatures = mwvm.NumberOfSignatures;
+            TotalSheets = mwvm.TotalSheets;
+            TotalPages = mwvm.TotalPages;
+            OffsetFromSpine = mwvm.OffsetFromSpine;
+            IsOffsetFromSpine = mwvm.IsOffsetFromSpine;
+            PageUnit = mwvm.PageUnit;
+            SourcePageAlignment = mwvm.SourcePageAlignment;
+            CustomSignatures = mwvm.CustomSignatures;
+            CustomBookSizeHeightF = mwvm.CustomBookSizeHeightF;
+            CustomBookSizeHeight = mwvm.CustomBookSizeHeight;
+            CustomBookSizeWidthF = mwvm.CustomBookSizeWidthF;
+            CustomBookSizeWidth = mwvm.CustomBookSizeWidth;
+            AlternatePageRotation = mwvm.AlternatePageRotation;
+            LayoutIsStacked = mwvm.LayoutIsStacked;
+            OutputTestOverlay = mwvm.OutputTestOverlay;
+            AddFlyleaf = mwvm.AddFlyleaf;
+            FormatOfSignature = mwvm.FormatOfSignature;
+            IsCustomSignatureFormat = mwvm.IsCustomSignatureFormat;
+            IsCustomBookSize = mwvm.IsCustomBookSize;
+            SizeOfBook = mwvm.SizeOfBook;
+            InputFilePath = mwvm.InputFilePath;
+            OutputPath = mwvm.OutputPath;
+            NumberOfPages = mwvm.NumberOfPages;
+            PageSize = mwvm.PageSize;
+            InputFilePath = mwvm.InputFilePath;
+            IsDirty = false;
         }
     }
 }

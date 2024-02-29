@@ -7,7 +7,7 @@
         xmlns:models="clr-namespace:BookbindingPdfMaker.Models"
         xmlns:converters="clr-namespace:BookbindingPdfMaker.Converters"
         mc:Ignorable="d"
-        Title="Bookbinding PDF Maker" Height="475" Width="900"
+        Title="Bookbinding PDF Maker" Height="475" Width="1000"
         ResizeMode="CanMinimize">
 
     <Window.DataContext>
@@ -48,12 +48,18 @@
             <converters:BoolToPageUnitConverter x:Key="BoolToPageUnitConverter"/>
             <converters:BoolToSourcePageAlignmentConverter x:Key="BoolToSourcePageAlignmentConverter"/>
             <converters:BoolInverterConverter x:Key="BoolInverterConverter"/>
+            <converters:BoolToStringHasContentConverter x:Key="BoolToStringHasContentConverter"/>
         </ResourceDictionary>
     </Window.Resources>
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem x:Name="MenuFileOpenInputPdf" Header="_Open Input PDF" Click="MenuFileOpenInputPdf_Click"/>
+                <MenuItem x:Name="MenuFileNewProject" Header="_New Project" Click="MenuFileNewProject_Click"/>
+                <MenuItem x:Name="MenuFileOpenProject" Header="_Open Project..." Click="MenuFileOpenProject_Click"/>
+                <MenuItem x:Name="MenuFileSaveProject" Header="_Save Project" Click="MenuFileSaveProject_Click" IsEnabled="{Binding InputFilePath, Converter={StaticResource BoolToStringHasContentConverter}, ConverterParameter=InputFilePath}"/>
+                <MenuItem x:Name="MenuFileSaveAsProject" Header="Save Project _As..." Click="MenuFileSaveAsProject_Click"/>
+                <Separator/>
+                <MenuItem x:Name="MenuFileOpenInputPdf" Header="Open _Input PDF" Click="MenuFileOpenInputPdf_Click"/>
                 <MenuItem x:Name="MenuFileSetOutputFolder" Header="_Set Output Folder" Click="MenuFileSetOutputFolder_Click"/>
                 <Separator/>
                 <MenuItem x:Name="MenuFileExit" Header="E_xit" Click="MenuFileExit_Click"/>
@@ -111,8 +117,7 @@
                         <TextBlock Style="{StaticResource SubTitle}">Paper Size</TextBlock>
                         <ComboBox x:Name="PaperSelectionCombo"
                                   SelectedItem="{Binding SelectedPaperSize}"
-                                  ItemsSource="{Binding PaperSizes}"
-                                  SelectionChanged="PaperSelectionCombo_SelectionChanged">
+                                  ItemsSource="{Binding PaperSizes}">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Name}"/>

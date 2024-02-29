@@ -26,8 +26,6 @@ namespace BookbindingPdfMaker.Services
 
         public void SetInputFileName(string fileName)
         {
-            _mwvm.FileName = Path.GetFileName(fileName);
-            _mwvm.InputPath = Path.GetDirectoryName(fileName) ?? "";
             _mwvm.InputFilePath = fileName;
 
             PdfInputForm = XPdfForm.FromFile(fileName);
@@ -38,8 +36,13 @@ namespace BookbindingPdfMaker.Services
             _mwvm.OutputPath = selectedPath;
         }
 
-        public SignatureInfo ReadSignatureInfo(string inputPdfPath)
+        public SignatureInfo? ReadSignatureInfo(string inputPdfPath)
         {
+            if (!File.Exists(inputPdfPath))
+            {
+                return null;
+            }
+
             using (PdfInputForm = XPdfForm.FromFile(inputPdfPath))
             {
                 return GetSignatureInfo();
@@ -128,7 +131,7 @@ namespace BookbindingPdfMaker.Services
                                 }
                             }
 
-                            _pdfOutputDoc.Save(Path.Combine(_outputSignatureFolder, $"Signature{signatureNumberForFile + 1}.pdf"));
+                            _pdfOutputDoc.Save(Path.Combine(_outputSignatureFolder, $"{Constants.SignatureFileNamePrefix}{signatureNumberForFile + 1}.pdf"));
                             signatureNumberForFile++;
                             _pdfOutputDoc.Close();
                         }
@@ -146,23 +149,23 @@ namespace BookbindingPdfMaker.Services
 
         private void CalculateBookSize()
         {
-            float f;
+            float tempFloat;
             switch (_mwvm.SizeOfBook)
             {
                 case BookSize.StandardPaperback:
-                    float.TryParse(App.Configuration["BookSizes:StandardPaperback:Width"]!.ToString(), out f);
-                    _outputBookWidth = XUnit.FromInch(f).Point;
+                    float.TryParse(App.Configuration[Constants.ConfigValue.BookSizes.StandardPaperback.Width]!.ToString(), out tempFloat);
+                    _outputBookWidth = XUnit.FromInch(tempFloat).Point;
 
-                    float.TryParse(App.Configuration["BookSizes:StandardPaperback:Height"]!.ToString(), out f);
-                    _outputBookHeight = XUnit.FromInch(f).Point;
+                    float.TryParse(App.Configuration[Constants.ConfigValue.BookSizes.StandardPaperback.Height]!.ToString(), out tempFloat);
+                    _outputBookHeight = XUnit.FromInch(tempFloat).Point;
                     break;
 
                 case BookSize.LargeFormatPaperback:
-                    float.TryParse(App.Configuration["BookSizes:LargePaperback:Width"]!.ToString(), out f);
-                    _outputBookWidth = XUnit.FromInch(f).Point;
+                    float.TryParse(App.Configuration[Constants.ConfigValue.BookSizes.LargePaperback.Width]!.ToString(), out tempFloat);
+                    _outputBookWidth = XUnit.FromInch(tempFloat).Point;
 
-                    float.TryParse(App.Configuration["BookSizes:LargePaperback:Height"]!.ToString(), out f);
-                    _outputBookHeight = XUnit.FromInch(f).Point;
+                    float.TryParse(App.Configuration[Constants.ConfigValue.BookSizes.LargePaperback.Height]!.ToString(), out tempFloat);
+                    _outputBookHeight = XUnit.FromInch(tempFloat).Point;
                     break;
 
                 case BookSize.FullPaperSize:
