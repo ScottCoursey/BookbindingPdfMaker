@@ -399,6 +399,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_816BFA115C04A25572298DAB8CA3B997"
+        "OwnerKey" = "8:_AA58A26A09BE446FAFE6C153854D0DE9"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_866AE78AD6224A71AEFD59B95D20D157"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -1022,6 +1028,14 @@
             "PrerequisitesLocation" = "2:1"
             "Url" = "8:"
             "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    }
+                }
             }
         }
         "Release"
@@ -2147,6 +2161,37 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_816BFA115C04A25572298DAB8CA3B997"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_816BFA115C04A25572298DAB8CA3B997"
+                    {
+                    "Name" = "8:Newtonsoft.Json.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:Newtonsoft.Json.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_659C2898B48C4016A0A4DCD355842E31"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_866AE78AD6224A71AEFD59B95D20D157"
             {
             "AssemblyRegister" = "3:1"
@@ -3173,15 +3218,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:BookbindingPdfMaker"
-        "ProductCode" = "8:{5084E449-DEA2-4AFF-BEB8-BBB72C55009E}"
-        "PackageCode" = "8:{F3C6BCE4-ABC0-4956-9ECC-7BCBC2DEC957}"
+        "ProductCode" = "8:{E17C1802-E9A5-4B63-919F-EB9FDA38508D}"
+        "PackageCode" = "8:{69920094-20DB-44CC-8401-B30174384388}"
         "UpgradeCode" = "8:{8FEF1D3C-F66F-46B8-8E34-340ED5D629F3}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:0.1.0"
+        "ProductVersion" = "8:0.2.0"
         "Manufacturer" = "8:Scott Coursey"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
