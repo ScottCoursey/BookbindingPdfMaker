@@ -3,6 +3,7 @@
     internal static class Constants
     {
         public const string N_A = "N/A";
+        public const string NewProjectFileName = "New Project";
         public const string NoFileSelected = "No File Selected";
         public const string NoFolderSelected = "No Folder Selected";
         public const string PrinterTypeSingle = "Single Sided";

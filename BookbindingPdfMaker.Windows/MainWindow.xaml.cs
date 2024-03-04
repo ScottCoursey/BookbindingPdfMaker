@@ -241,19 +241,22 @@ namespace BookbindingPdfMaker
             var json = JsonConvert.SerializeObject(_mwvm);
             File.WriteAllText(_mwvm.ProjectFilePath, json);
             _mwvm.IsDirty = false;
+            UpdateWindowTitle();
         }
 
         private void SaveProjectAs()
         {
             var dialog = new Microsoft.Win32.SaveFileDialog()
             {
+                FileName = string.IsNullOrEmpty(_mwvm.InputFilePath) ? Constants.NewProjectFileName : Path.GetFileNameWithoutExtension(_mwvm.InputFilePath) + ".bpmp",
                 DefaultExt = ".bpmp",
                 Filter = "Bookbinding PDF Maker Project|*.bpmp"
             };
 
             if (dialog.ShowDialog() == true)
             {
-                var fileName = dialog.FileName;
+                _mwvm.ProjectFilePath = dialog.FileName;
+                SaveProject();
             }
         }
 
