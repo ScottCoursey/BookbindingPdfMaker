@@ -17,6 +17,9 @@ namespace BookbindingPdfMaker.Services
         private int _defaultSignatureSize;
         private double _outputBookWidth;
         private double _outputBookHeight;
+        private double _aspectRatio;
+        private double _width;
+        private double _height;
 
         public PdfMaker(MainWindowViewModel mwvm, IStackedPageMatrixCalculator stackedPageMatrixCalculator)
         {
@@ -24,11 +27,19 @@ namespace BookbindingPdfMaker.Services
             _stackedPageMatrixCalculator = stackedPageMatrixCalculator;
         }
 
-        public void SetInputFileName(string fileName)
+        public bool SetInputFileName(string fileName)
         {
             _mwvm.InputFilePath = fileName;
 
-            PdfInputForm = XPdfForm.FromFile(fileName);
+            try
+            {
+                PdfInputForm = XPdfForm.FromFile(fileName);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
 
         public void SetOutputPath(string selectedPath)
@@ -53,14 +64,18 @@ namespace BookbindingPdfMaker.Services
         {
             try
             {
+                _aspectRatio = -1;
                 _outputSignatureFolder = outputSignatureFolder;
 
                 CalculateBookSize();
+                _width = _outputBookWidth;
+                _height = _outputBookHeight;
 
                 using (PdfInputForm = XPdfForm.FromFile(inputPdfPath))
                 {
                     var signatureInfo = GetSignatureInfo();
                     int.TryParse(_mwvm.NumberOfPages, out var numberOfPages);
+                    numberOfPages += _mwvm.AddFlyleaf ? 4 : 0;
                     var pageMatrixCollection = _stackedPageMatrixCalculator.GetMatrix(signatureInfo.SignatureSizeList, numberOfPages);
                     var numberOfSignatures = signatureInfo.SignatureSizeList.Count();
                     var signaturePageStart = 1;
@@ -112,10 +127,12 @@ namespace BookbindingPdfMaker.Services
                                 {
                                     var outputSignaturePageNumber = signaturePageNumberMax - signaturePageNumber;
                                     var outputSheetNumber = signatureSheetStart + ((outputSignaturePageNumber + 1) / 2) - 1;
+
+                                    var isFront = signaturePageNumber % 2 == 0;
                                     var pageMatrix = pageMatrixCollection.FirstOrDefault(pm =>
                                         pm.SheetNum == outputSheetNumber &&
                                         pm.FrontOrBack == (
-                                            signaturePageNumber % 2 == 0
+                                            isFront
                                                 ? PageFrontOrBack.Front
                                                 : PageFrontOrBack.Back
                                         )
@@ -274,7 +291,8 @@ namespace BookbindingPdfMaker.Services
 
         private void ApplyPage(PdfPage outputPage, int inputPageNum, OutputLocation outputLocation, PageDirection pageDirection)
         {
-            if (inputPageNum > PdfInputForm!.PageCount)
+            Trace.WriteLine($"InputPageNum: {inputPageNum}");
+            if (inputPageNum > PdfInputForm!.PageCount + (_mwvm.AddFlyleaf ? 4 : 0))
             {
                 return;
             }
@@ -288,7 +306,7 @@ namespace BookbindingPdfMaker.Services
             var outputPageImage = true;
             if (_mwvm.AddFlyleaf)
             {
-                if (inputPageNum < 3)
+                if (inputPageNum < 3 || inputPageNum > PdfInputForm!.PageCount + (_mwvm.AddFlyleaf ? 2 : 0))
                 {
                     outputPageImage = false;
                 }
@@ -300,8 +318,6 @@ namespace BookbindingPdfMaker.Services
 
             var paperWidth = outputPage.Width;
             var paperHeight = outputPage.Height;
-            var width = _outputBookWidth;
-            var height = _outputBookHeight;
 
             using (var gfx = XGraphics.FromPdfPage(outputPage))
             {
@@ -312,14 +328,17 @@ namespace BookbindingPdfMaker.Services
 
                 if (_mwvm.SelectedScaleOfPage!.ScaleOfPage != PageScaling.Stretch)
                 {
-                    var aspectRatio = PdfInputForm.PointWidth / PdfInputForm.PointHeight;
-                    if (_mwvm.SelectedScaleOfPage.ScaleOfPage == PageScaling.KeepProportionWidth)
+                    if (_aspectRatio == -1)
                     {
-                        height = width / aspectRatio;
-                    }
-                    else
-                    {
-                        width = height * aspectRatio;
+                        _aspectRatio = PdfInputForm.PointWidth / PdfInputForm.PointHeight;
+                        if (_mwvm.SelectedScaleOfPage.ScaleOfPage == PageScaling.KeepProportionWidth)
+                        {
+                            _height = _width / _aspectRatio;
+                        }
+                        else
+                        {
+                            _width = _height * _aspectRatio;
+                        }
                     }
                 }
 
@@ -336,23 +355,23 @@ namespace BookbindingPdfMaker.Services
                         switch (outputLocation)
                         {
                             case OutputLocation.TopLeft:
-                                left = (paperWidth / 4) - (width / 2);
-                                top = (paperHeight / 4) - (height / 2);
+                                left = (paperWidth / 4) - (_width / 2);
+                                top = (paperHeight / 4) - (_height / 2);
                                 break;
 
                             case OutputLocation.TopRight:
-                                left = (paperWidth * 3 / 4) - (width / 2);
-                                top = (paperHeight / 4) - (height / 2);
+                                left = (paperWidth * 3 / 4) - (_width / 2);
+                                top = (paperHeight / 4) - (_height / 2);
                                 break;
 
                             case OutputLocation.BottomLeft:
-                                left = (paperWidth / 4) - (width / 2);
-                                top = (paperHeight * 3 / 4) - (height / 2);
+                                left = (paperWidth / 4) - (_width / 2);
+                                top = (paperHeight * 3 / 4) - (_height / 2);
                                 break;
 
                             case OutputLocation.BottomRight:
-                                left = (paperWidth * 3 / 4) - (width / 2);
-                                top = (paperHeight * 3 / 4) - (height / 2);
+                                left = (paperWidth * 3 / 4) - (_width / 2);
+                                top = (paperHeight * 3 / 4) - (_height / 2);
                                 break;
                         }
                     }
@@ -361,26 +380,26 @@ namespace BookbindingPdfMaker.Services
                         if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToRight)
                         {
                             rotation = 90;
-                            left = (paperHeight / 4) - (width / 2);
-                            top = -(paperWidth / 2) - (height / 2);
+                            left = (paperHeight / 4) - (_width / 2);
+                            top = -(paperWidth / 2) - (_height / 2);
                         }
                         else if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToLeft)
                         {
                             rotation = -90;
-                            left = -(paperHeight / 4) - (width / 2);
-                            top = (paperWidth / 2) - (height / 2);
+                            left = -(paperHeight / 4) - (_width / 2);
+                            top = (paperWidth / 2) - (_height / 2);
                         }
                         else if (outputLocation == OutputLocation.Bottom && pageDirection == PageDirection.TopToRight)
                         {
                             rotation = 90;
-                            left = (paperHeight * 3 / 4) - (width / 2);
-                            top = -(paperWidth / 2) - (height / 2);
+                            left = (paperHeight * 3 / 4) - (_width / 2);
+                            top = -(paperWidth / 2) - (_height / 2);
                         }
                         else
                         {
                             rotation = -90;
-                            left = -(paperHeight * 3 / 4) - (width / 2);
-                            top = (paperWidth / 2) - (height / 2);
+                            left = -(paperHeight * 3 / 4) - (_width / 2);
+                            top = (paperWidth / 2) - (_height / 2);
                         }
                     }
                 }
@@ -391,23 +410,23 @@ namespace BookbindingPdfMaker.Services
                         switch (outputLocation)
                         {
                             case OutputLocation.TopLeft:
-                                left = (paperWidth / 2) - width - offsetFromSpineAmount;
-                                top = (paperHeight / 4) - (height / 2);
+                                left = (paperWidth / 2) - _width - offsetFromSpineAmount;
+                                top = (paperHeight / 4) - (_height / 2);
                                 break;
 
                             case OutputLocation.TopRight:
                                 left = (paperWidth / 2) + offsetFromSpineAmount;
-                                top = (paperHeight / 4) - (height / 2);
+                                top = (paperHeight / 4) - (_height / 2);
                                 break;
 
                             case OutputLocation.BottomLeft:
-                                left = (paperWidth / 2) - width - offsetFromSpineAmount;
-                                top = (paperHeight * 3 / 4) - (height / 2);
+                                left = (paperWidth / 2) - _width - offsetFromSpineAmount;
+                                top = (paperHeight * 3 / 4) - (_height / 2);
                                 break;
 
                             case OutputLocation.BottomRight:
                                 left = (paperWidth / 2) + offsetFromSpineAmount;
-                                top = (paperHeight * 3 / 4) - (height / 2);
+                                top = (paperHeight * 3 / 4) - (_height / 2);
                                 break;
                         }
                     }
@@ -416,26 +435,26 @@ namespace BookbindingPdfMaker.Services
                         if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToRight)
                         {
                             rotation = 90;
-                            left = (paperHeight / 2) - width - offsetFromSpineAmount;
-                            top = -(paperWidth / 2) - (height / 2);
+                            left = (paperHeight / 2) - _width - offsetFromSpineAmount;
+                            top = -(paperWidth / 2) - (_height / 2);
                         }
                         else if (outputLocation == OutputLocation.Top && pageDirection == PageDirection.TopToLeft)
                         {
                             rotation = -90;
                             left = -(paperHeight / 2) + offsetFromSpineAmount;
-                            top = (paperWidth / 2) - (height / 2);
+                            top = (paperWidth / 2) - (_height / 2);
                         }
                         else if (outputLocation == OutputLocation.Bottom && pageDirection == PageDirection.TopToRight)
                         {
                             rotation = 90;
                             left = (paperHeight / 2) + offsetFromSpineAmount;
-                            top = -(paperWidth / 2) - (height / 2);
+                            top = -(paperWidth / 2) - (_height / 2);
                         }
                         else
                         {
                             rotation = -90;
-                            left = -(paperHeight / 2) - width - offsetFromSpineAmount;
-                            top = (paperWidth / 2) - (height / 2);
+                            left = -(paperHeight / 2) - _width - offsetFromSpineAmount;
+                            top = (paperWidth / 2) - (_height / 2);
                         }
                     }
                 }
@@ -445,7 +464,7 @@ namespace BookbindingPdfMaker.Services
                     gfx.RotateAtTransform(rotation, new XPoint(0, 0));
                 }
 
-                box = new XRect(left, top, width, height);
+                box = new XRect(left, top, _width, _height);
 
                 if (inputPageNum == -1)
                 {

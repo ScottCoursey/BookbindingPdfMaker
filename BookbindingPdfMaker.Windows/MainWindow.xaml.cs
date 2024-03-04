@@ -19,18 +19,13 @@ namespace BookbindingPdfMaker
             _pdfMaker = new PdfMaker(_mwvm, new StackedPageMatrixCalculator());
 
             _mwvm.PaperSizes = LoadPapers();
-            _mwvm.SelectedPaperSize = _mwvm.PaperSizes.First(paper => paper.Name!.ToUpper() == "LETTER");
-
             _mwvm.PrinterTypes = LoadPrinterTypes();
-            _mwvm.SelectedPrinterType = _mwvm.PrinterTypes.First(printerType => printerType.IsDuplex == true);
-
             _mwvm.ScaleOfPages = LoadScaleOfPages();
-            _mwvm.SelectedScaleOfPage = _mwvm.ScaleOfPages.First(scaleOfPage => scaleOfPage.ScaleOfPage == PageScaling.KeepProportionWidth);
+
+            CreateNewProject();
 
             DataContext = _mwvm;
             UpdateWindowTitle();
-
-            CreateNewProject();
         }
 
         private IEnumerable<PaperDefinition> LoadPapers()
@@ -98,9 +93,15 @@ namespace BookbindingPdfMaker
                 }
                 else
                 {
-                    _pdfMaker.SetInputFileName(fileName);
-                    UpdateFileRelevantInfo();
-                    CheckOutputPath();
+                    if (!_pdfMaker.SetInputFileName(fileName))
+                    {
+                        System.Windows.MessageBox.Show("There was an error opening the PDF.  Many times, this occurs because something else has the file open or it hasn't finished the creation process.  Please try this again; it may take a minute or so for the creation to complete if that's the error.", "Unable to open PDF", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    else
+                    {
+                        UpdateFileRelevantInfo();
+                        CheckOutputPath();
+                    }
                 }
             }
         }
@@ -180,14 +181,19 @@ namespace BookbindingPdfMaker
             }
 
             // The final output folder must contain the input file name without the .pdf extension.
-            if (Path.Exists(_mwvm.OutputPath))
+            if (_mwvm.OutputPath == Constants.NoFolderSelected)
             {
-                var fileName = Path.GetFileNameWithoutExtension(_mwvm.FileName);
-                if (!_mwvm.OutputPath.EndsWith(fileName))
-                {
-                    _mwvm.OutputPath = Path.Combine(_mwvm.OutputPath, fileName);
-                }
+                _mwvm.OutputPath = Path.GetDirectoryName(_mwvm.InputFilePath);
             }
+
+            //if (Path.Exists(_mwvm.OutputPath))
+            //{
+            //    var fileName = Path.GetFileNameWithoutExtension(_mwvm.FileName);
+            //    if (!_mwvm.OutputPath.EndsWith(fileName))
+            //    {
+            //        _mwvm.OutputPath = Path.Combine(_mwvm.OutputPath, fileName);
+            //    }
+            //}
 
             ButtonGenerateDocument.IsEnabled = true;
         }
@@ -389,7 +395,9 @@ namespace BookbindingPdfMaker
 
         private void CreateNewProject()
         {
-            _mwvm.ApplyModel(new MainWindowViewModel());
+            var newProject = new MainWindowViewModel();
+            newProject.CreateNewProject(_mwvm);
+            _mwvm.ApplyModel(newProject);
             UpdateWindowTitle();
         }
 

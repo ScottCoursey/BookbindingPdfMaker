@@ -565,5 +565,12 @@ namespace BookbindingPdfMaker.Models
             InputFilePath = mwvm.InputFilePath;
             IsDirty = false;
         }
+
+        public void CreateNewProject(MainWindowViewModel originalProject)
+        {
+            SelectedPaperSize = originalProject.PaperSizes.First(paper => paper.Name!.ToUpper() == "LETTER");
+            SelectedPrinterType = originalProject.PrinterTypes.First(printerType => printerType.IsDuplex == true);
+            SelectedScaleOfPage = originalProject.ScaleOfPages.First(scaleOfPage => scaleOfPage.ScaleOfPage == PageScaling.KeepProportionWidth);
+        }
     }
 }

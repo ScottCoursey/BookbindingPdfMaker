@@ -7,7 +7,7 @@ namespace BookbindingPdfMaker.Services
         XPdfForm? PdfInputForm { get; }
 
         void Generate(string inputPdfPath, string outputSignatureFolder);
-        void SetInputFileName(string fileName);
+        bool SetInputFileName(string fileName);
         void SetOutputPath(string selectedPath);
         SignatureInfo? ReadSignatureInfo(string inputPdfPath);
     }

@@ -90,11 +90,11 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <TextBlock VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Padding="0,0,4,0">File Name:</TextBlock>
-                            <TextBlock VerticalAlignment="Center" Grid.Row="0" Grid.Column="1" Text="{Binding FileName}"/>
+                            <TextBlock VerticalAlignment="Center" Grid.Row="0" Grid.Column="1" Text="{Binding FileName}" ToolTip="{Binding InputFilePath}"/>
                             <Button x:Name="FileOpenButton" Click="MenuFileOpenInputPdf_Click" Margin="4" Grid.Row="0" Grid.Column="2">...</Button>
 
                             <TextBlock VerticalAlignment="Center" Grid.Row="1" Grid.Column="0" Padding="0,0,4,0">Output Folder:</TextBlock>
-                            <TextBlock VerticalAlignment="Center" Grid.Row="1" Grid.Column="1" Text="{Binding OutputPath}"/>
+                            <TextBlock VerticalAlignment="Center" Grid.Row="1" Grid.Column="1" Text="{Binding OutputPath}" ToolTip="{Binding OutputPath}"/>
                             <Button x:Name="OutputPathButton" Click="MenuFileSetOutputFolder_Click" Margin="4" Grid.Row="1" Grid.Column="2">...</Button>
 
                             <TextBlock VerticalAlignment="Center" Grid.Row="2" Grid.Column="0" Padding="0,0,4,0"># of Pages:</TextBlock>
@@ -170,7 +170,9 @@
                         <TextBlock Style="{StaticResource SubTitle}">Page Scaling</TextBlock>
                         <ComboBox x:Name="ScaleOfPageComboBox"
                                   SelectedItem="{Binding SelectedScaleOfPage}"
-                                  ItemsSource="{Binding ScaleOfPages}">
+                                  ItemsSource="{Binding ScaleOfPages}"
+                                  IsEnabled="{Binding IsCustomBookSize}"
+                                  >
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Name}"/>
