@@ -10,21 +10,21 @@ namespace BookbindingPdfMaker
     public partial class MainWindow : Window
     {
         private IPdfMaker _pdfMaker;
-        private MainWindowViewModel _mwvm;
+        private MainWindowViewModel _mainWindowViewModel;
 
         public MainWindow()
         {
             InitializeComponent();
-            _mwvm = new MainWindowViewModel();
-            _pdfMaker = new PdfMaker(_mwvm, new StackedPageMatrixCalculator());
+            _mainWindowViewModel = new MainWindowViewModel();
+            _pdfMaker = new PdfMaker(_mainWindowViewModel, new StackedPageMatrixCalculator());
 
-            _mwvm.PaperSizes = LoadPapers();
-            _mwvm.PrinterTypes = LoadPrinterTypes();
-            _mwvm.ScaleOfPages = LoadScaleOfPages();
+            _mainWindowViewModel.PaperSizes = LoadPapers();
+            _mainWindowViewModel.PrinterTypes = LoadPrinterTypes();
+            _mainWindowViewModel.ScaleOfPages = LoadScaleOfPages();
 
             CreateNewProject();
 
-            DataContext = _mwvm;
+            DataContext = _mainWindowViewModel;
             UpdateWindowTitle();
         }
 
@@ -108,30 +108,30 @@ namespace BookbindingPdfMaker
 
         private void UpdateFileRelevantInfo()
         {
-            if (string.IsNullOrEmpty(_mwvm.InputFilePath))
+            if (string.IsNullOrEmpty(_mainWindowViewModel.InputFilePath))
             {
                 return;
             }
 
-            var signatureInfo = _pdfMaker.ReadSignatureInfo(_mwvm.InputFilePath);
+            var signatureInfo = _pdfMaker.ReadSignatureInfo(_mainWindowViewModel.InputFilePath);
             if (signatureInfo == null)
             {
                 // There was an issue in getting the signature info.  This is most likely
                 // due to the going missing.
-                _mwvm.ProjectFilePath = "";
-                _mwvm.InputFilePath = "";
+                _mainWindowViewModel.ProjectFilePath = "";
+                _mainWindowViewModel.InputFilePath = "";
                 UpdateWindowTitle();
                 return;
             }
 
-            _mwvm.TotalPages = signatureInfo.FullPageCount;
+            _mainWindowViewModel.TotalPages = signatureInfo.FullPageCount;
 
-            if (_mwvm.LayoutIsStacked && signatureInfo.SignatureSizeList.Count() % 2 == 1)
+            if (_mainWindowViewModel.LayoutIsStacked && signatureInfo.SignatureSizeList.Count() % 2 == 1)
             {
                 signatureInfo.SignatureSizeList.Add(0);
             }
 
-            if (_mwvm.LayoutIsStacked)
+            if (_mainWindowViewModel.LayoutIsStacked)
             {
                 var numSheets = 0;
                 for (int signatureSet = 0; signatureSet < signatureInfo.SignatureSizeList.Count(); signatureSet += 2)
@@ -142,15 +142,15 @@ namespace BookbindingPdfMaker
                     numSheets += signatureSetSize;
                 }
 
-                _mwvm.TotalSheets = numSheets;
+                _mainWindowViewModel.TotalSheets = numSheets;
             }
             else
             {
-                _mwvm.TotalSheets = signatureInfo.SignatureSizeList.Sum(size => size);
+                _mainWindowViewModel.TotalSheets = signatureInfo.SignatureSizeList.Sum(size => size);
             }
 
-            _mwvm.NumberOfSignatures = signatureInfo.SignatureSizeList.Where(sig => sig > 0).Count();
-            _mwvm.NumberOfPages = _pdfMaker.PdfInputForm!.PageCount.ToString();
+            _mainWindowViewModel.NumberOfSignatures = signatureInfo.SignatureSizeList.Where(sig => sig > 0).Count();
+            _mainWindowViewModel.NumberOfPages = _pdfMaker.PdfInputForm!.PageCount.ToString();
         }
 
         private void MenuFileSetOutputFolder_Click(object sender, RoutedEventArgs e)
@@ -167,23 +167,23 @@ namespace BookbindingPdfMaker
 
         private void CheckOutputPath()
         {
-            if (string.IsNullOrEmpty(_mwvm.FileName) || string.IsNullOrEmpty(_mwvm.OutputPath))
+            if (string.IsNullOrEmpty(_mainWindowViewModel.FileName) || string.IsNullOrEmpty(_mainWindowViewModel.OutputPath))
             {
                 ButtonGenerateDocument.IsEnabled = false;
                 return;
             }
 
             // Does the input file name exist?  It really should...
-            if (!File.Exists(_mwvm.InputFilePath))
+            if (!File.Exists(_mainWindowViewModel.InputFilePath))
             {
                 System.Windows.MessageBox.Show("The input file does not exist.", "Input File Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
             // The final output folder must contain the input file name without the .pdf extension.
-            if (_mwvm.OutputPath == Constants.NoFolderSelected)
+            if (_mainWindowViewModel.OutputPath == Constants.NoFolderSelected)
             {
-                _mwvm.OutputPath = Path.GetDirectoryName(_mwvm.InputFilePath);
+                _mainWindowViewModel.OutputPath = Path.GetDirectoryName(_mainWindowViewModel.InputFilePath);
             }
 
             //if (Path.Exists(_mwvm.OutputPath))
@@ -205,7 +205,7 @@ namespace BookbindingPdfMaker
 
         private void InvokeWithSave(Action invokedIfSafe)
         {
-            if (!_mwvm.IsDirty)
+            if (!_mainWindowViewModel.IsDirty)
             {
                 invokedIfSafe.Invoke();
                 return;
@@ -232,15 +232,15 @@ namespace BookbindingPdfMaker
 
         private void SaveProject()
         {
-            if (string.IsNullOrEmpty(_mwvm.ProjectFilePath))
+            if (string.IsNullOrEmpty(_mainWindowViewModel.ProjectFilePath))
             {
                 SaveProjectAs();
                 return;
             }
 
-            var json = JsonConvert.SerializeObject(_mwvm);
-            File.WriteAllText(_mwvm.ProjectFilePath, json);
-            _mwvm.IsDirty = false;
+            var json = JsonConvert.SerializeObject(_mainWindowViewModel);
+            File.WriteAllText(_mainWindowViewModel.ProjectFilePath, json);
+            _mainWindowViewModel.IsDirty = false;
             UpdateWindowTitle();
         }
 
@@ -248,14 +248,14 @@ namespace BookbindingPdfMaker
         {
             var dialog = new Microsoft.Win32.SaveFileDialog()
             {
-                FileName = string.IsNullOrEmpty(_mwvm.InputFilePath) ? Constants.NewProjectFileName : Path.GetFileNameWithoutExtension(_mwvm.InputFilePath) + ".bpmp",
+                FileName = string.IsNullOrEmpty(_mainWindowViewModel.InputFilePath) ? Constants.NewProjectFileName : Path.GetFileNameWithoutExtension(_mainWindowViewModel.InputFilePath) + ".bpmp",
                 DefaultExt = ".bpmp",
                 Filter = "Bookbinding PDF Maker Project|*.bpmp"
             };
 
             if (dialog.ShowDialog() == true)
             {
-                _mwvm.ProjectFilePath = dialog.FileName;
+                _mainWindowViewModel.ProjectFilePath = dialog.FileName;
                 SaveProject();
             }
         }
@@ -272,7 +272,7 @@ namespace BookbindingPdfMaker
 
         private void ButtonGenerateDocument_Click(object sender, RoutedEventArgs e)
         {
-            if (Directory.Exists(_mwvm.OutputPath))
+            if (Directory.Exists(_mainWindowViewModel.OutputPath))
             {
                 if (System.Windows.MessageBox.Show("The selected output folder already exists, which means it may have information from a previous signature extration or some other data.  Are you sure you want to overwrite it?", "Overwrite Previous Output", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
                 {
@@ -280,9 +280,9 @@ namespace BookbindingPdfMaker
                 }
             }
 
-            Directory.CreateDirectory(_mwvm.OutputPath);
+            Directory.CreateDirectory(_mainWindowViewModel.OutputPath);
 
-            _pdfMaker.Generate(_mwvm.InputFilePath, _mwvm.OutputPath);
+            _pdfMaker.Generate(_mainWindowViewModel.InputFilePath, _mainWindowViewModel.OutputPath);
 
             System.Windows.MessageBox.Show("The PDF has completed its generation", "PDF Complete", MessageBoxButton.OK, MessageBoxImage.Information);
         }
@@ -332,7 +332,7 @@ namespace BookbindingPdfMaker
 
         private void CustomSignatureTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
-            if (_mwvm == null)
+            if (_mainWindowViewModel == null)
             {
                 return;
             }
@@ -356,7 +356,7 @@ namespace BookbindingPdfMaker
             {
                 DefaultExt = ".bpmp",
                 Filter = "Bookbinding PDF Maker Project|*.bpmp",
-                FileName = string.IsNullOrEmpty(_mwvm.ProjectFilePath) ? "New Project.bpmp" : Path.GetFileName(_mwvm.ProjectFilePath)
+                FileName = string.IsNullOrEmpty(_mainWindowViewModel.ProjectFilePath) ? "New Project.bpmp" : Path.GetFileName(_mainWindowViewModel.ProjectFilePath)
             };
 
             if (dialog.ShowDialog() == true)
@@ -370,9 +370,14 @@ namespace BookbindingPdfMaker
                         newMwvm!.InputFilePath = "";
                         System.Windows.MessageBox.Show("Unable to open the input PDF as defined in the project, so be sure to select one before generating an output.", "Missing Input File", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
-                    _mwvm.ProjectFilePath = fileName;
-                    _mwvm.ApplyModel(newMwvm!);
+                    _mainWindowViewModel.ProjectFilePath = fileName;
+                    _mainWindowViewModel.ApplyModel(newMwvm!);
                     UpdateWindowTitle();
+
+                    if (!string.IsNullOrEmpty(_mainWindowViewModel.InputFilePath) && !string.IsNullOrEmpty(_mainWindowViewModel.OutputPath))
+                    {
+                        ButtonGenerateDocument.IsEnabled = true;
+                    }
                 }
                 catch
                 {
@@ -399,17 +404,17 @@ namespace BookbindingPdfMaker
         private void CreateNewProject()
         {
             var newProject = new MainWindowViewModel();
-            newProject.CreateNewProject(_mwvm);
-            _mwvm.ApplyModel(newProject);
+            newProject.CreateNewProject(_mainWindowViewModel);
+            _mainWindowViewModel.ApplyModel(newProject);
             UpdateWindowTitle();
         }
 
         private void UpdateWindowTitle()
         {
             var suffix = "";
-            if (!string.IsNullOrEmpty(_mwvm.ProjectFilePath) && _mwvm.ProjectFilePath != Constants.NoFileSelected)
+            if (!string.IsNullOrEmpty(_mainWindowViewModel.ProjectFilePath) && _mainWindowViewModel.ProjectFilePath != Constants.NoFileSelected)
             {
-                suffix = $" : {_mwvm.ProjectFilePath}";
+                suffix = $" : {_mainWindowViewModel.ProjectFilePath}";
             }
             Title = $"{Constants.WindowTitle}{suffix}";
         }

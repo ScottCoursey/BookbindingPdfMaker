@@ -20,7 +20,7 @@
       <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-      <PackageReference Include="PDFsharp" Version="6.0.0" />
+      <PackageReference Include="PDFsharp" Version="6.1.1" />
     </ItemGroup>
 
     <ItemGroup>

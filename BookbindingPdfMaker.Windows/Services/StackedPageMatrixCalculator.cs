@@ -13,8 +13,8 @@ namespace BookbindingPdfMaker.Services
 
             for (var signatureSetStart = 0; signatureSetStart < signatureList.Count(); signatureSetStart += 2)
             {
-                var upperSignatureSize = signatureList.ElementAt(signatureSetStart);
-                var lowerSignatureSize = signatureList.ElementAt(signatureSetStart + 1);
+                var upperSignatureSize = signatureList.ElementAtOrDefault(signatureSetStart);
+                var lowerSignatureSize = signatureList.ElementAtOrDefault(signatureSetStart + 1);
 
                 var largerSignatureSize = Math.Max(upperSignatureSize, lowerSignatureSize);
                 var lesserSignatureSize = Math.Min(upperSignatureSize, lowerSignatureSize);

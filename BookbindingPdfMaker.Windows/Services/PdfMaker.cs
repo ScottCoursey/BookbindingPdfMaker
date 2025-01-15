@@ -36,8 +36,9 @@ namespace BookbindingPdfMaker.Services
                 PdfInputForm = XPdfForm.FromFile(fileName);
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
+                // There's an error reading the file so it should be reported elsewhere.
                 return false;
             }
         }
@@ -54,9 +55,17 @@ namespace BookbindingPdfMaker.Services
                 return null;
             }
 
-            using (PdfInputForm = XPdfForm.FromFile(inputPdfPath))
+            try
             {
-                return GetSignatureInfo();
+                using (PdfInputForm = XPdfForm.FromFile(inputPdfPath))
+                {
+                    return GetSignatureInfo();
+                }
+            }
+            catch (Exception)
+            {
+                // There's an error reading the file so it should be reported elsewhere.
+                return null;
             }
         }
 
@@ -160,7 +169,7 @@ namespace BookbindingPdfMaker.Services
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(ex.Message);
+                MessageBox.Show("There was an error creating the output: {0}", ex.Message);
             }
         }
 
